@@ -2,9 +2,16 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>イベント登録</title>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+  <title>イベント登録フォーム</title>
+  <!-- Firebase compat CDN を読み込む -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    input, textarea { width: 300px; margin-bottom: 10px; }
+    button { padding: 5px 15px; }
+    #status { margin-top: 10px; font-weight: bold; }
+  </style>
 </head>
 <body>
   <h1>イベント登録フォーム</h1>
@@ -30,7 +37,7 @@
     };
 
     // Firebase 初期化
-    const app = firebase.initializeApp(firebaseConfig);
+    firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
     // フォーム送信処理
@@ -39,4 +46,22 @@
       e.preventDefault();
       const name = document.getElementById("eventName").value;
       const date = document.getElementById("eventDate").value;
-      const desc = document.getE
+      const desc = document.getElementById("eventDesc").value;
+
+      try {
+        await db.collection("events").add({
+          name: name,
+          date: date,
+          description: desc,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        document.getElementById("status").textContent = "登録成功！🎉";
+        form.reset();
+      } catch (error) {
+        console.error(error);
+        document.getElementById("status").textContent = "登録失敗…";
+      }
+    });
+  </script>
+</body>
+</html>
