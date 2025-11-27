@@ -44,6 +44,14 @@
             transform: translateY(-5px);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
+        /* ★画像表示用のCSSを追加★ */
+        .event-card .event-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            display: block; 
+        }
         .event-card h2 {
             color: #4285f4; /* Googleブルー */
             margin-top: 0;
@@ -102,15 +110,12 @@
         </div>
     </div>
 
-    <!-- Firebase SDKのCDNを読み込みます -->
-    <!-- type="module" を使用するため、ローカルサーバー経由で開くか、バンドラを使用してください -->
     <script type="module">
         // Firebase SDKの各モジュールをインポートします
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
         import { getFirestore, collection, getDocs, orderBy, query } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
         // --- あなたのFirebaseプロジェクト設定 ---
-        // Firebase Consoleから提供された設定をそのまま貼り付けています。
         const firebaseConfig = {
             apiKey: "AIzaSyBH8EPKOwIBIMR16Z7PTECc2Lp0Y5cfkHQ",
             authDomain: "november5th-a1336.firebaseapp.com",
@@ -129,7 +134,6 @@
         // DOM要素への参照を取得
         const eventsListContainer = document.getElementById('events-list');
         const loadEventsButton = document.getElementById('loadEventsButton');
-        const initialMessage = document.getElementById('initial-message');
 
         // Firestoreからイベントデータを取得して表示する非同期関数
         async function fetchEvents() {
@@ -138,13 +142,10 @@
             loadEventsButton.disabled = true; // ボタンを無効化
 
             try {
-                // --- ★重要: あなたのFirestoreのコレクション名に合わせて変更してください！★ ---
-                // 例: 'events', 'my_events', 'schedule' など
+                // コレクション名: 'events'
                 const eventsCollectionRef = collection(db, "events");
 
-                // --- ★オプション: ソート順を変更する場合や、別のフィールドでソートする場合は変更してください★ ---
-                // ここでは、Firestoreに 'date' フィールドがあり、Timestamp型または日付文字列として
-                // 保存されていることを想定し、昇順でソートしています。
+                // ソート: 'date' フィールドの昇順
                 const q = query(eventsCollectionRef, orderBy("date", "asc"));
 
                 const querySnapshot = await getDocs(q);
@@ -163,19 +164,16 @@
                     const eventCard = document.createElement('div');
                     eventCard.className = 'event-card';
 
-                    // --- ★重要: あなたのFirestoreのフィールド名に合わせて変更してください！★ ---
-                    // 各イベントドキュメントに以下のフィールドがあると仮定しています。
-                    // - title: イベントのタイトル (String)
-                    // - date: イベントの日付 (String または Firestore Timestamp)
-                    // - description: イベントの詳細説明 (String)
-                    // - location: イベント開催場所 (String)
+                    // --- ★画像フィールドを含む全てのフィールドを取得★ ---
                     const title = eventData.title || 'タイトルなし';
                     // dateがTimestamp型の場合はtoDate().toLocaleDateString()で整形
                     const date = eventData.date ? (eventData.date.toDate ? eventData.date.toDate().toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' }) : eventData.date) : '日付未定';
                     const description = eventData.description || '説明なし';
                     const location = eventData.location || '場所未定';
+                    const imageUrl = eventData.imageUrl || ''; // ★imageUrlを取得★
 
                     eventCard.innerHTML = `
+                        ${imageUrl ? `<img src="${imageUrl}" alt="${title}" class="event-image">` : ''}
                         <h2>${title}</h2>
                         <p class="date">日付: ${date}</p>
                         <p><strong>場所:</strong> ${location}</p>
@@ -196,8 +194,6 @@
             loadEventsButton.addEventListener('click', fetchEvents);
         }
         
-        // （オプション）ページロード時に自動的にイベントを読み込む場合は、以下のコメントを外してください。
-        // fetchEvents();
     </script>
 </body>
 </html>
