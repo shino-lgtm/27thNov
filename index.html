@@ -3,25 +3,201 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>私のFirestore Webアプリ</title>
+    <title>イベント一覧 - My Firestore App (november5th-a1336)</title>
     <style>
-        body { font-family: sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
-        h1 { color: #de3c21; } /* Firebaseカラー */
-        #data-container { margin-top: 20px; border: 1px solid #ccc; padding: 15px; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .document-item { background-color: #e8f0fe; margin-bottom: 8px; padding: 10px; border-radius: 4px; border-left: 5px solid #4285f4; }
-        button { background-color: #4285f4; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
-        button:hover { background-color: #3367d6; }
+        /* スタイリング */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f7f6;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #de3c21; /* Firebaseカラー */
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+        #events-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+        }
+        .event-card {
+            background-color: #e8f0fe; /* 明るいブルー */
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: transform 0.2s ease-in-out;
+        }
+        .event-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .event-card h2 {
+            color: #4285f4; /* Googleブルー */
+            margin-top: 0;
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+        .event-card p {
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+        .event-card .date {
+            font-weight: bold;
+            color: #34a853; /* Googleグリーン */
+        }
+        .event-card .location {
+            color: #ea4335; /* Googleレッド */
+        }
+        .loading-message, .error-message {
+            text-align: center;
+            font-size: 1.1em;
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .loading-message {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .error-message {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        button {
+            display: block;
+            margin: 20px auto;
+            padding: 12px 25px;
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        button:hover {
+            background-color: #3367d6;
+        }
     </style>
 </head>
 <body>
-    <h1>Firestore データ表示</h1>
-    <button id="loadDataButton">Firestoreからデータをロード</button>
-    <div id="data-container">
-        <p>ここにFirestoreからのデータが表示されます。</p>
+    <div class="container">
+        <h1>開催予定のイベント</h1>
+        <button id="loadEventsButton">イベントをロード</button>
+        <div id="events-list">
+            <p class="loading-message" id="initial-message">「イベントをロード」ボタンをクリックしてイベント情報を表示します。</p>
+        </div>
     </div>
 
-    <!-- Firebase SDKを読み込むJavaScriptファイル -->
-    <!-- type="module" を使うので、ローカルサーバー経由で開くか、バンドラを使用してください -->
-    <script type="module" src="./script.js"></script>
+    <!-- Firebase SDKのCDNを読み込みます -->
+    <!-- type="module" を使用するため、ローカルサーバー経由で開くか、バンドラを使用してください -->
+    <script type="module">
+        // Firebase SDKの各モジュールをインポートします
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+        import { getFirestore, collection, getDocs, orderBy, query } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+        // --- あなたのFirebaseプロジェクト設定 ---
+        // Firebase Consoleから提供された設定をそのまま貼り付けています。
+        const firebaseConfig = {
+            apiKey: "AIzaSyBH8EPKOwIBIMR16Z7PTECc2Lp0Y5cfkHQ",
+            authDomain: "november5th-a1336.firebaseapp.com",
+            projectId: "november5th-a1336",
+            storageBucket: "november5th-a1336.firebasestorage.app",
+            messagingSenderId: "11537951889",
+            appId: "1:11537951889:web:d783b2298fc90f88a3a330"
+        };
+
+        // Firebaseアプリを初期化
+        const app = initializeApp(firebaseConfig);
+
+        // Firestoreデータベースのインスタンスを取得
+        const db = getFirestore(app);
+
+        // DOM要素への参照を取得
+        const eventsListContainer = document.getElementById('events-list');
+        const loadEventsButton = document.getElementById('loadEventsButton');
+        const initialMessage = document.getElementById('initial-message');
+
+        // Firestoreからイベントデータを取得して表示する非同期関数
+        async function fetchEvents() {
+            // ロード中のメッセージを表示
+            eventsListContainer.innerHTML = '<p class="loading-message">イベント情報をロード中...</p>';
+            loadEventsButton.disabled = true; // ボタンを無効化
+
+            try {
+                // --- ★重要: あなたのFirestoreのコレクション名に合わせて変更してください！★ ---
+                // 例: 'events', 'my_events', 'schedule' など
+                const eventsCollectionRef = collection(db, "events");
+
+                // --- ★オプション: ソート順を変更する場合や、別のフィールドでソートする場合は変更してください★ ---
+                // ここでは、Firestoreに 'date' フィールドがあり、Timestamp型または日付文字列として
+                // 保存されていることを想定し、昇順でソートしています。
+                const q = query(eventsCollectionRef, orderBy("date", "asc"));
+
+                const querySnapshot = await getDocs(q);
+
+                if (querySnapshot.empty) {
+                    eventsListContainer.innerHTML = '<p class="loading-message">イベントは見つかりませんでした。</p>';
+                    return;
+                }
+
+                // 既存のコンテンツをクリア
+                eventsListContainer.innerHTML = '';
+
+                // 取得した各イベントドキュメントをHTMLに表示
+                querySnapshot.forEach((doc) => {
+                    const eventData = doc.data();
+                    const eventCard = document.createElement('div');
+                    eventCard.className = 'event-card';
+
+                    // --- ★重要: あなたのFirestoreのフィールド名に合わせて変更してください！★ ---
+                    // 各イベントドキュメントに以下のフィールドがあると仮定しています。
+                    // - title: イベントのタイトル (String)
+                    // - date: イベントの日付 (String または Firestore Timestamp)
+                    // - description: イベントの詳細説明 (String)
+                    // - location: イベント開催場所 (String)
+                    const title = eventData.title || 'タイトルなし';
+                    // dateがTimestamp型の場合はtoDate().toLocaleDateString()で整形
+                    const date = eventData.date ? (eventData.date.toDate ? eventData.date.toDate().toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' }) : eventData.date) : '日付未定';
+                    const description = eventData.description || '説明なし';
+                    const location = eventData.location || '場所未定';
+
+                    eventCard.innerHTML = `
+                        <h2>${title}</h2>
+                        <p class="date">日付: ${date}</p>
+                        <p><strong>場所:</strong> ${location}</p>
+                        <p>${description}</p>
+                    `;
+                    eventsListContainer.appendChild(eventCard);
+                });
+            } catch (error) {
+                console.error("イベントの取得中にエラーが発生しました:", error);
+                eventsListContainer.innerHTML = `<p class="error-message">イベントのロードに失敗しました。<br>エラー: ${error.message}</p>`;
+            } finally {
+                loadEventsButton.disabled = false; // ボタンを再度有効化
+            }
+        }
+
+        // ボタンがクリックされたときにイベントを取得
+        if (loadEventsButton) {
+            loadEventsButton.addEventListener('click', fetchEvents);
+        }
+        
+        // （オプション）ページロード時に自動的にイベントを読み込む場合は、以下のコメントを外してください。
+        // fetchEvents();
+    </script>
 </body>
 </html>
