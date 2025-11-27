@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>イベント登録</title>
+</head>
+<body>
+  <h1>イベント登録フォーム</h1>
+
+  <form id="eventForm">
+    <label>イベント名：<input type="text" id="eventName" required></label><br>
+    <label>日時：<input type="datetime-local" id="eventDate" required></label><br>
+    <label>説明：<textarea id="eventDesc"></textarea></label><br>
+    <button type="submit">登録</button>
+  </form>
+
+  <div id="status"></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // ★ここにあなたの config を貼る
+    const firebaseConfig = {
+      apiKey: "AIzaSyBH8EPKOwIBIMR16Z7PTECc2Lp0Y5cfkHQ",
+      authDomain: "november5th-a1336.firebaseapp.com",
+      projectId: "november5th-a1336",
+      storageBucket: "november5th-a1336.firebasestorage.app",
+      messagingSenderId: "11537951889",
+      appId: "1:11537951889:web:d783b2298fc90f88a3a330"
+    };
+
+    // Firebase 初期化
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // フォーム送信処理
+    const form = document.getElementById("eventForm");
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const name = document.getElementById("eventName").value;
+      const date = document.getElementById("eventDate").value;
+      const desc = document.getElementById("eventDesc").value;
+
+      try {
+        await addDoc(collection(db, "events"), {
+          name,
+          date,
+          description: desc,
+          createdAt: serverTimestamp()
+        });
+
+        document.getElementById("status").textContent = "登録成功！🎉";
+        form.reset();
+      } catch (error) {
+        console.error(error);
+        document.getElementById("status").textContent = "登録失敗…";
+      }
+    });
+  </script>
+</body>
+</html>
