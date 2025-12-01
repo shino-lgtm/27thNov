@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>イベント一覧 (タグフィルター付き) - My Firestore App</title>
     <style>
+        /* ティファニーブルーのメインカラー */
+        :root {
+            --tiffany-blue: #0ABAB5; /* メインカラー */
+            --darker-tiffany: #1D9A94; /* 濃いトーン */
+            --lighter-tiffany: #81D8D0; /* 薄いトーン */
+            --lightest-bg: #F0FCFC; /* カード背景 */
+        }
+        
         /* 基本スタイル */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -23,19 +31,18 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
         h1 {
-            color: #de3c21;
+            color: var(--tiffany-blue); /* ★メインタイトルをティファニーブルーに★ */
             text-align: left; 
             margin-top: 0;
             margin-bottom: 30px;
             font-weight: 600;
         }
         
-        /* ★検索バーの右寄せ調整のためのコンテナ★ */
+        /* ヘッダーセクション: タイトルと検索バーを左右に配置 */
         .header-section {
-            /* タイトルと検索バーを左右に配置 */
             display: flex;
             justify-content: space-between;
-            align-items: center; /* 垂直方向中央揃え */
+            align-items: center; 
             margin-bottom: 25px;
         }
         
@@ -43,11 +50,11 @@
         #search-controls {
             display: flex;
             gap: 10px;
-            padding: 10px; /* パディングを少し減らしてコンパクトに */
+            padding: 10px; 
             border: 1px solid #ddd;
             border-radius: 8px;
             background-color: #f9f9f9;
-            width: auto; /* 幅を自動調整 */
+            width: auto; 
             box-sizing: border-box;
         }
         #search-input {
@@ -58,9 +65,9 @@
             font-size: 1em;
         }
         #search-button {
-            padding: 8px 15px;
-            background-color: #34a853;
+            background-color: var(--tiffany-blue); /* ★検索ボタンもティファニーブルーに★ */
             color: white;
+            padding: 8px 15px;
             border: none;
             border-radius: 5px;
             font-size: 1em;
@@ -68,7 +75,7 @@
             transition: background-color 0.2s ease;
         }
         #search-button:hover {
-            background-color: #2c8e42;
+            background-color: var(--darker-tiffany);
         }
 
         /* タグフィルターエリアのスタイル */
@@ -82,42 +89,41 @@
         #tag-filter-container h3 {
             margin-top: 0;
             margin-bottom: 10px;
-            color: #4285f4;
+            color: var(--darker-tiffany); /* ★見出し色を濃いティファニーブルーに★ */
             font-size: 1.1em;
             font-weight: 600;
         }
         .tag-filter-chip {
             display: inline-block;
-            background-color: #e8f0fe; 
-            color: #4285f4; 
+            background-color: var(--lightest-bg); /* ★チップ非選択時の背景色★ */
+            color: var(--darker-tiffany); /* ★チップ非選択時の文字色★ */
             padding: 5px 12px;
             margin-right: 8px;
             margin-bottom: 8px;
-            border: 1px solid #c8d3e6;
+            border: 1px solid var(--lighter-tiffany); /* ★チップの枠線色★ */
             border-radius: 15px;
             font-size: 0.9em;
             cursor: pointer;
             transition: all 0.2s;
         }
         .tag-filter-chip:hover {
-            background-color: #d2e3fc;
+            background-color: var(--lighter-tiffany);
         }
         .tag-filter-chip.active {
-            background-color: #4285f4; 
+            background-color: var(--tiffany-blue); /* ★チップ選択時の背景色★ */
             color: white; 
-            border-color: #3367d6;
+            border-color: var(--darker-tiffany);
             font-weight: bold;
         }
 
-        /* ★イベントリストの元のグリッドスタイル（変更なし）★ */
+        /* イベントリストのスタイル */
         #events-list {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 25px;
         }
-        /* ★イベントカードの元のスタイル（変更なし）★ */
         .event-card {
-            background-color: #e8f0fe;
+            background-color: var(--lightest-bg); /* ★カード背景色を明るい色に★ */
             border-radius: 8px;
             padding: 20px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -127,7 +133,6 @@
             transform: translateY(-5px);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
-        /* ★画像サイズを元に戻す（max-width: 100%でカード幅に収める）★ */
         .event-card .event-image {
             max-width: 100%;
             height: auto;
@@ -136,9 +141,8 @@
             display: block; 
         }
         
-        /* カード内テキストスタイル */
         .event-card h2 {
-            color: #4285f4;
+            color: var(--darker-tiffany); /* ★カード内タイトル色を濃いティファニーブルーに★ */
             margin-top: 0;
             font-size: 1.5em;
             margin-bottom: 10px;
@@ -149,20 +153,20 @@
         }
         .event-card .date {
             font-weight: bold;
-            color: #34a853;
+            color: #34a853; /* 日付は視認性を重視して残します */
         }
         .event-card .location {
-            color: #ea4335;
+            color: #ea4335; /* 場所も視認性を重視して残します */
         }
         /* イベント内タグリストのスタイル */
         .tags-list {
             margin-top: 10px;
             padding-top: 10px;
-            border-top: 1px solid #c8d3e6; 
+            border-top: 1px solid var(--lighter-tiffany); /* ★区切り線を薄いティファニーブルーに★ */
         }
         .tag {
             display: inline-block;
-            background-color: #aebfd9;
+            background-color: var(--lighter-tiffany); /* ★個別タグの背景色を薄いティファニーブルーに★ */
             color: #1a1a1a;
             padding: 3px 8px;
             margin-right: 5px;
@@ -180,7 +184,7 @@
             border-radius: 5px;
         }
         .loading-message {
-            background-color: #fff3cd;
+            background-color: #fff3cd; 
             color: #856404;
         }
         .error-message {
@@ -300,10 +304,8 @@
             // クリックイベントリスナーを設定
             document.querySelectorAll('.tag-filter-chip').forEach(chip => {
                 chip.addEventListener('click', (e) => {
-                    // アクティブタグを更新
                     const newTag = e.target.dataset.tag;
                     
-                    // 現在のタグと同じタグをクリックしたら解除し、そうでなければ設定する
                     activeTag = (newTag === activeTag && newTag !== '') ? '' : newTag;
                     
                     // アクティブクラスの更新
@@ -311,15 +313,12 @@
                         c.classList.remove('active');
                     });
 
-                    // 選択されたタグにactiveクラスを設定（または「すべて」に設定）
                     if (activeTag === '') {
                         allTagChip.classList.add('active');
                     } else {
-                        // 新しいアクティブタグに対応するチップにactiveクラスを設定
                         document.querySelector(`.tag-filter-chip[data-tag="${activeTag}"]`).classList.add('active');
                     }
 
-                    // イベントリストを再描画
                     filterAndRenderEvents();
                 });
             });
