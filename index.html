@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>イベント一覧 (絞り込み機能付き) - My Firestore App</title>
+    <title>イベント一覧 (タグフィルター付き) - My Firestore App</title>
     <style>
-        /* 既存のスタイリング */
+        /* 基本スタイル */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
@@ -24,19 +24,30 @@
         }
         h1 {
             color: #de3c21;
-            text-align: center;
+            text-align: left; /* タイトルは左寄せに戻す */
+            margin-top: 0;
             margin-bottom: 30px;
             font-weight: 600;
         }
-        /* 検索フォームのスタイル */
+        
+        /* 検索バー（右寄せ）のスタイル */
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 25px;
+            /* floatの代わりにFlexboxで左右に配置 */
+        }
+        
         #search-controls {
             display: flex;
             gap: 10px;
-            margin-bottom: 25px;
             padding: 15px;
             border: 1px solid #ddd;
             border-radius: 8px;
             background-color: #f9f9f9;
+            width: 350px; /* 検索バーの幅を固定 */
+            box-sizing: border-box;
         }
         #search-input {
             flex-grow: 1;
@@ -58,6 +69,45 @@
         #search-button:hover {
             background-color: #2c8e42;
         }
+
+        /* ★タグフィルターエリアのスタイル★ */
+        #tag-filter-container {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        #tag-filter-container h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #4285f4;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+        .tag-filter-chip {
+            display: inline-block;
+            background-color: #e8f0fe; /* 非選択時の背景色 */
+            color: #4285f4; /* 非選択時の文字色 */
+            padding: 5px 12px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            border: 1px solid #c8d3e6;
+            border-radius: 15px;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .tag-filter-chip:hover {
+            background-color: #d2e3fc;
+        }
+        .tag-filter-chip.active {
+            background-color: #4285f4; /* 選択時の背景色 */
+            color: white; /* 選択時の文字色 */
+            border-color: #3367d6;
+            font-weight: bold;
+        }
+
         /* イベントリストのスタイル */
         #events-list {
             display: grid;
@@ -75,31 +125,7 @@
             transform: translateY(-5px);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
-        .event-card .event-image {
-            max-width: 100%;
-            height: auto;
-            border-radius: 5px;
-            margin-bottom: 15px;
-            display: block; 
-        }
-        .event-card h2 {
-            color: #4285f4;
-            margin-top: 0;
-            font-size: 1.5em;
-            margin-bottom: 10px;
-        }
-        .event-card p {
-            margin-bottom: 8px;
-            font-size: 0.95em;
-        }
-        .event-card .date {
-            font-weight: bold;
-            color: #34a853;
-        }
-        .event-card .location {
-            color: #ea4335;
-        }
-        /* ★タグリストのスタイル（追加分）★ */
+        /* ... 他のカード内スタイルは変更なし ... */
         .tags-list {
             margin-top: 10px;
             padding-top: 10px;
@@ -139,22 +165,28 @@
 </head>
 <body>
     <div class="container">
-        <h1>開催予定のイベント</h1>
-
-        <div id="search-controls">
-            <input type="text" id="search-input" placeholder="キーワードを入力して絞り込み (例: 東京, AI, エンジニア)">
-            <button id="search-button">検索</button>
+        
+        <div class="header-section">
+            <h1>開催予定のイベント</h1>
+            <div id="search-controls">
+                <input type="text" id="search-input" placeholder="キーワードで絞り込み (例: AI, 東京)">
+                <button id="search-button">検索</button>
+            </div>
         </div>
         
-        <button id="loadEventsButton">イベントをロード</button>
-
+        <div id="tag-filter-container">
+            <h3>タグで絞り込む</h3>
+            <div id="tag-chips-list">
+                <p class="loading-message" style="margin: 0; padding: 0;">タグ情報をロード中...</p>
+            </div>
+        </div>
+        
         <div id="events-list">
-            <p class="loading-message" id="initial-message">「検索」ボタン、またはページロード時にイベント情報を表示します。</p>
+            <p class="loading-message" id="initial-message">イベント情報をロード中...</p>
         </div>
     </div>
 
     <script type="module">
-        // Firebase SDKの各モジュールをインポートします
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
         import { getFirestore, collection, getDocs, orderBy, query } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
@@ -168,7 +200,6 @@
             appId: "1:11537951889:web:d783b2298fc90f88a3a330"
         };
 
-        // Firebaseアプリを初期化
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
@@ -176,116 +207,182 @@
         const eventsListContainer = document.getElementById('events-list');
         const searchInput = document.getElementById('search-input');
         const searchButton = document.getElementById('search-button');
+        const tagChipsList = document.getElementById('tag-chips-list');
 
-        // Firestoreから全データを取得し、キーワードでフィルタリングする関数
-        async function loadEvents(keyword = '') {
-            const lowerCaseKeyword = keyword.trim().toLowerCase();
+        let allEventsData = []; // 取得した全イベントデータを保持する配列
+        let activeTag = ''; // 現在選択されているタグを保持する変数
 
-            eventsListContainer.innerHTML = '<p class="loading-message">イベント情報をロード中...</p>';
-            searchButton.disabled = true; 
-
+        /**
+         * Firestoreからデータを取得し、グローバル変数に保存後、タグフィルターを生成する
+         */
+        async function fetchAllEventsAndSetupTags() {
             try {
-                // 1. Firestoreから全データを取得 (日付順)
                 const eventsCollectionRef = collection(db, "events");
                 const q = query(eventsCollectionRef, orderBy("date", "asc"));
 
                 const querySnapshot = await getDocs(q);
-                let eventsData = [];
+                allEventsData = []; // データをリセット
+                let uniqueTags = new Set();
 
                 querySnapshot.forEach((doc) => {
-                    eventsData.push(doc.data());
-                });
-
-                if (eventsData.length === 0) {
-                    eventsListContainer.innerHTML = '<p class="loading-message">イベントは見つかりませんでした。</p>';
-                    return;
-                }
-
-                // 2. キーワードでクライアントサイドフィルタリング (tagsフィールドを検索対象に追加)
-                let filteredEvents = eventsData;
-                
-                if (lowerCaseKeyword) {
-                    filteredEvents = eventsData.filter(event => {
-                        const title = (event.title || '').toLowerCase();
-                        const description = (event.description || '').toLowerCase();
-                        const location = (event.location || '').toLowerCase();
-                        // tagsフィールドを検索対象に追加
-                        const tags = Array.isArray(event.tags) ? event.tags.map(tag => tag.toLowerCase()) : [];
-
-                        // タイトル、説明、場所、タグのいずれかにキーワードが含まれていればOK
-                        return title.includes(lowerCaseKeyword) ||
-                               description.includes(lowerCaseKeyword) ||
-                               location.includes(lowerCaseKeyword) ||
-                               tags.some(tag => tag.includes(lowerCaseKeyword)); 
-                    });
-                }
-
-                // 3. フィルタリングされたデータをHTMLに描画 (tagsの描画処理を追加)
-                eventsListContainer.innerHTML = ''; // 既存のコンテンツをクリア
-
-                if (filteredEvents.length === 0) {
-                     eventsListContainer.innerHTML = `<p class="loading-message">「${keyword}」に一致するイベントは見つかりませんでした。</p>`;
-                     return;
-                }
-
-                filteredEvents.forEach((eventData) => {
-                    const eventCard = document.createElement('div');
-                    eventCard.className = 'event-card';
-
-                    // 描画用のデータ整形
-                    const title = eventData.title || 'タイトルなし';
-                    // dateがTimestamp型の場合はtoDate()で整形
-                    const date = eventData.date ? (eventData.date.toDate ? eventData.date.toDate().toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' }) : eventData.date) : '日付未定';
-                    const description = eventData.description || '説明なし';
-                    const location = eventData.location || '場所未定';
-                    const imageUrl = eventData.imageUrl || '';
+                    const data = doc.data();
+                    allEventsData.push(data);
                     
-                    // tagsフィールドの処理
-                    const tags = Array.isArray(eventData.tags) ? eventData.tags : [];
-                    const tagsHtml = tags.length > 0
-                        ? `<div class="tags-list">${tags.map(tag => `<span class="tag">${tag}</span>`).join('')}</div>`
-                        : '';
-
-                    eventCard.innerHTML = `
-                        ${imageUrl ? `<img src="${imageUrl}" alt="${title}" class="event-image">` : ''}
-                        <h2>${title}</h2>
-                        <p class="date">日付: ${date}</p>
-                        <p><strong>場所:</strong> ${location}</p>
-                        <p>${description}</p>
-                        ${tagsHtml}
-                    `;
-                    eventsListContainer.appendChild(eventCard);
+                    // すべてのタグを収集
+                    if (Array.isArray(data.tags)) {
+                        data.tags.forEach(tag => {
+                            if (tag.trim()) {
+                                uniqueTags.add(tag.trim());
+                            }
+                        });
+                    }
                 });
+
+                // タグフィルターの描画
+                renderTagFilters(Array.from(uniqueTags).sort());
 
             } catch (error) {
-                console.error("イベントの取得中にエラーが発生しました:", error);
-                eventsListContainer.innerHTML = `<p class="error-message">イベントのロードに失敗しました。<br>エラー: ${error.message}</p>`;
-            } finally {
-                searchButton.disabled = false; // ボタンを再度有効化
+                console.error("データの取得中にエラーが発生しました:", error);
+                tagChipsList.innerHTML = `<p class="error-message">タグのロードに失敗しました。</p>`;
             }
+        }
+        
+        /**
+         * タグフィルターのHTMLを描画し、クリックイベントを設定する
+         */
+        function renderTagFilters(tags) {
+            tagChipsList.innerHTML = ''; // クリア
+            
+            // 「すべて」タグを追加
+            const allTagChip = document.createElement('span');
+            allTagChip.className = 'tag-filter-chip ' + (activeTag === '' ? 'active' : '');
+            allTagChip.textContent = 'すべて';
+            allTagChip.dataset.tag = '';
+            tagChipsList.appendChild(allTagChip);
+
+            tags.forEach(tag => {
+                const tagChip = document.createElement('span');
+                tagChip.className = 'tag-filter-chip ' + (activeTag === tag ? 'active' : '');
+                tagChip.textContent = tag;
+                tagChip.dataset.tag = tag;
+                tagChipsList.appendChild(tagChip);
+            });
+
+            // クリックイベントリスナーを設定
+            document.querySelectorAll('.tag-filter-chip').forEach(chip => {
+                chip.addEventListener('click', (e) => {
+                    // アクティブタグを更新
+                    const newTag = e.target.dataset.tag;
+                    activeTag = newTag === activeTag ? '' : newTag; // 同じタグを再度クリックしたら解除
+                    
+                    // アクティブクラスの更新
+                    document.querySelectorAll('.tag-filter-chip').forEach(c => {
+                        c.classList.remove('active');
+                    });
+                    if (activeTag === '') {
+                        allTagChip.classList.add('active');
+                    } else {
+                        e.target.classList.add('active');
+                    }
+                    
+                    // キーワード検索をクリア（オプション）
+                    // searchInput.value = '';
+
+                    // イベントリストを再描画
+                    filterAndRenderEvents();
+                });
+            });
+        }
+        
+        /**
+         * キーワードとタグフィルターに基づいてイベントをフィルタリングし、HTMLに描画する
+         */
+        function filterAndRenderEvents() {
+            const keyword = searchInput.value.trim().toLowerCase();
+            const tagFilter = activeTag.toLowerCase();
+
+            eventsListContainer.innerHTML = '<p class="loading-message">イベントを絞り込み中...</p>';
+            searchButton.disabled = true;
+
+            let filteredEvents = allEventsData.filter(event => {
+                const title = (event.title || '').toLowerCase();
+                const description = (event.description || '').toLowerCase();
+                const location = (event.location || '').toLowerCase();
+                const eventTags = Array.isArray(event.tags) ? event.tags.map(tag => tag.toLowerCase()) : [];
+
+                // 1. キーワードフィルタリング (タイトル、説明、場所、タグのいずれかに一致)
+                const keywordMatch = !keyword || 
+                                     title.includes(keyword) ||
+                                     description.includes(keyword) ||
+                                     location.includes(keyword) ||
+                                     eventTags.some(tag => tag.includes(keyword));
+
+                // 2. タグフィルタリング (選択されたタグがイベントのtags配列に含まれているか)
+                const tagMatch = !tagFilter || eventTags.includes(tagFilter);
+
+                return keywordMatch && tagMatch;
+            });
+
+            // 描画
+            eventsListContainer.innerHTML = '';
+            if (filteredEvents.length === 0) {
+                 eventsListContainer.innerHTML = `<p class="loading-message">一致するイベントは見つかりませんでした。</p>`;
+                 searchButton.disabled = false;
+                 return;
+            }
+
+            filteredEvents.forEach((eventData) => {
+                const eventCard = document.createElement('div');
+                eventCard.className = 'event-card';
+
+                const title = eventData.title || 'タイトルなし';
+                const date = eventData.date ? (eventData.date.toDate ? eventData.date.toDate().toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' }) : eventData.date) : '日付未定';
+                const description = eventData.description || '説明なし';
+                const location = eventData.location || '場所未定';
+                const imageUrl = eventData.imageUrl || '';
+                
+                const tags = Array.isArray(eventData.tags) ? eventData.tags : [];
+                const tagsHtml = tags.length > 0
+                    ? `<div class="tags-list">${tags.map(tag => `<span class="tag">${tag}</span>`).join('')}</div>`
+                    : '';
+
+                eventCard.innerHTML = `
+                    ${imageUrl ? `<img src="${imageUrl}" alt="${title}" class="event-image">` : ''}
+                    <h2>${title}</h2>
+                    <p class="date">日付: ${date}</p>
+                    <p><strong>場所:</strong> ${location}</p>
+                    <p>${description}</p>
+                    ${tagsHtml}
+                `;
+                eventsListContainer.appendChild(eventCard);
+            });
+            searchButton.disabled = false;
         }
 
         // --- イベントリスナーの設定 ---
 
-        // 検索ボタンがクリックされたとき
-        searchButton.addEventListener('click', () => {
-            const keyword = searchInput.value;
-            loadEvents(keyword);
-        });
+        // 検索ボタンがクリックされたとき、またはEnterキーが押されたとき
+        const handleSearch = () => {
+             // タグフィルターと併用するため、ただ描画関数を呼び出す
+            filterAndRenderEvents();
+        };
 
-        // キー入力（Enterキー）でも検索を実行できるようにする
+        searchButton.addEventListener('click', handleSearch);
         searchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                searchButton.click();
+                handleSearch();
             }
         });
         
-        // ページロード時に自動的にイベントを読み込む
-        window.addEventListener('load', () => {
-            loadEvents(''); 
-        });
+        // --- ページロード時の初期処理 ---
 
+        window.addEventListener('load', async () => {
+            // 1. 全データを取得し、タグフィルターをセットアップ
+            await fetchAllEventsAndSetupTags(); 
+            // 2. フィルタリングを実行して初回描画
+            filterAndRenderEvents();
+        });
     </script>
 </body>
 </html>
