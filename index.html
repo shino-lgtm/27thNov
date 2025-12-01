@@ -28,7 +28,7 @@
             margin-bottom: 30px;
             font-weight: 600;
         }
-        /* ★検索フォームのスタイルを追加★ */
+        /* 検索フォームのスタイル */
         #search-controls {
             display: flex;
             gap: 10px;
@@ -47,7 +47,7 @@
         }
         #search-button {
             padding: 10px 20px;
-            background-color: #34a853; /* Googleグリーン */
+            background-color: #34a853;
             color: white;
             border: none;
             border-radius: 5px;
@@ -58,7 +58,7 @@
         #search-button:hover {
             background-color: #2c8e42;
         }
-        /* 既存のスタイル */
+        /* イベントリストのスタイル */
         #events-list {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -99,6 +99,24 @@
         .event-card .location {
             color: #ea4335;
         }
+        /* ★タグリストのスタイル（追加分）★ */
+        .tags-list {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #c8d3e6; 
+        }
+        .tag {
+            display: inline-block;
+            background-color: #aebfd9;
+            color: #1a1a1a;
+            padding: 3px 8px;
+            margin-right: 5px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 500;
+        }
+        /* メッセージスタイル */
         .loading-message, .error-message {
             text-align: center;
             font-size: 1.1em;
@@ -114,7 +132,6 @@
             background-color: #f8d7da;
             color: #721c24;
         }
-        /* ロードボタンは検索フォームに置き換えられるため、非表示または削除しても良いですが、ここでは残しておきます */
         #loadEventsButton {
             display: none; 
         }
@@ -125,7 +142,7 @@
         <h1>開催予定のイベント</h1>
 
         <div id="search-controls">
-            <input type="text" id="search-input" placeholder="キーワードを入力して絞り込み (例: 東京, AI)">
+            <input type="text" id="search-input" placeholder="キーワードを入力して絞り込み (例: 東京, AI, エンジニア)">
             <button id="search-button">検索</button>
         </div>
         
@@ -139,7 +156,6 @@
     <script type="module">
         // Firebase SDKの各モジュールをインポートします
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-        // where関数を使用しないため、firestoreのimportはgetFirestore, collection, getDocs, orderBy, queryのみでOK
         import { getFirestore, collection, getDocs, orderBy, query } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
         // --- あなたのFirebaseプロジェクト設定 ---
@@ -162,20 +178,14 @@
         const searchButton = document.getElementById('search-button');
 
         // Firestoreから全データを取得し、キーワードでフィルタリングする関数
-        // ★クエリ名を fetchEvents から loadEvents に変更し、キーワード引数を追加★
         async function loadEvents(keyword = '') {
-            // キーワードを小文字に変換
             const lowerCaseKeyword = keyword.trim().toLowerCase();
 
-            // ロード中のメッセージを表示
             eventsListContainer.innerHTML = '<p class="loading-message">イベント情報をロード中...</p>';
             searchButton.disabled = true; 
 
             try {
-                // 1. Firestoreから全データを取得
-                // 注意: FirestoreのgetDocsは高速ですが、データ量が非常に多い場合、
-                // 全件取得してからクライアント側でフィルタリングするのは非効率です。
-                // データ量が少ない前提での実装です。
+                // 1. Firestoreから全データを取得 (日付順)
                 const eventsCollectionRef = collection(db, "events");
                 const q = query(eventsCollectionRef, orderBy("date", "asc"));
 
@@ -191,7 +201,7 @@
                     return;
                 }
 
-                // 2. キーワードでクライアントサイドフィルタリング
+                // 2. キーワードでクライアントサイドフィルタリング (tagsフィールドを検索対象に追加)
                 let filteredEvents = eventsData;
                 
                 if (lowerCaseKeyword) {
@@ -199,16 +209,18 @@
                         const title = (event.title || '').toLowerCase();
                         const description = (event.description || '').toLowerCase();
                         const location = (event.location || '').toLowerCase();
+                        // tagsフィールドを検索対象に追加
+                        const tags = Array.isArray(event.tags) ? event.tags.map(tag => tag.toLowerCase()) : [];
 
-                        // タイトル、説明、場所のいずれかにキーワードが含まれていればOK
+                        // タイトル、説明、場所、タグのいずれかにキーワードが含まれていればOK
                         return title.includes(lowerCaseKeyword) ||
                                description.includes(lowerCaseKeyword) ||
-                               location.includes(lowerCaseKeyword);
+                               location.includes(lowerCaseKeyword) ||
+                               tags.some(tag => tag.includes(lowerCaseKeyword)); 
                     });
                 }
 
-
-                // 3. フィルタリングされたデータをHTMLに描画
+                // 3. フィルタリングされたデータをHTMLに描画 (tagsの描画処理を追加)
                 eventsListContainer.innerHTML = ''; // 既存のコンテンツをクリア
 
                 if (filteredEvents.length === 0) {
@@ -222,11 +234,17 @@
 
                     // 描画用のデータ整形
                     const title = eventData.title || 'タイトルなし';
-                    // dateがTimestamp型の場合はtoDate().toLocaleDateString()で整形
+                    // dateがTimestamp型の場合はtoDate()で整形
                     const date = eventData.date ? (eventData.date.toDate ? eventData.date.toDate().toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' }) : eventData.date) : '日付未定';
                     const description = eventData.description || '説明なし';
                     const location = eventData.location || '場所未定';
-                    const imageUrl = eventData.imageUrl || ''; 
+                    const imageUrl = eventData.imageUrl || '';
+                    
+                    // tagsフィールドの処理
+                    const tags = Array.isArray(eventData.tags) ? eventData.tags : [];
+                    const tagsHtml = tags.length > 0
+                        ? `<div class="tags-list">${tags.map(tag => `<span class="tag">${tag}</span>`).join('')}</div>`
+                        : '';
 
                     eventCard.innerHTML = `
                         ${imageUrl ? `<img src="${imageUrl}" alt="${title}" class="event-image">` : ''}
@@ -234,6 +252,7 @@
                         <p class="date">日付: ${date}</p>
                         <p><strong>場所:</strong> ${location}</p>
                         <p>${description}</p>
+                        ${tagsHtml}
                     `;
                     eventsListContainer.appendChild(eventCard);
                 });
@@ -254,17 +273,17 @@
             loadEvents(keyword);
         });
 
-        // キー入力（Enterキー）でも検索を実行できるようにする (UX向上)
+        // キー入力（Enterキー）でも検索を実行できるようにする
         searchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                e.preventDefault(); // フォームの送信を防ぐ
+                e.preventDefault();
                 searchButton.click();
             }
         });
         
-        // （オプション）ページロード時に自動的にイベントを読み込む
+        // ページロード時に自動的にイベントを読み込む
         window.addEventListener('load', () => {
-            loadEvents(''); // 初期表示としてキーワードなしで全件ロード
+            loadEvents(''); 
         });
 
     </script>
