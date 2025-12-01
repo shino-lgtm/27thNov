@@ -24,40 +24,41 @@
         }
         h1 {
             color: #de3c21;
-            text-align: left; /* タイトルは左寄せに戻す */
+            text-align: left; 
             margin-top: 0;
             margin-bottom: 30px;
             font-weight: 600;
         }
         
-        /* 検索バー（右寄せ）のスタイル */
+        /* ★検索バーの右寄せ調整のためのコンテナ★ */
         .header-section {
+            /* タイトルと検索バーを左右に配置 */
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
+            align-items: center; /* 垂直方向中央揃え */
             margin-bottom: 25px;
-            /* floatの代わりにFlexboxで左右に配置 */
         }
         
+        /* 検索バーのスタイル */
         #search-controls {
             display: flex;
             gap: 10px;
-            padding: 15px;
+            padding: 10px; /* パディングを少し減らしてコンパクトに */
             border: 1px solid #ddd;
             border-radius: 8px;
             background-color: #f9f9f9;
-            width: 350px; /* 検索バーの幅を固定 */
+            width: auto; /* 幅を自動調整 */
             box-sizing: border-box;
         }
         #search-input {
             flex-grow: 1;
-            padding: 10px;
+            padding: 8px;
             border: 1px solid #ccc;
             border-radius: 5px;
             font-size: 1em;
         }
         #search-button {
-            padding: 10px 20px;
+            padding: 8px 15px;
             background-color: #34a853;
             color: white;
             border: none;
@@ -70,7 +71,7 @@
             background-color: #2c8e42;
         }
 
-        /* ★タグフィルターエリアのスタイル★ */
+        /* タグフィルターエリアのスタイル */
         #tag-filter-container {
             margin-bottom: 30px;
             padding: 15px;
@@ -87,8 +88,8 @@
         }
         .tag-filter-chip {
             display: inline-block;
-            background-color: #e8f0fe; /* 非選択時の背景色 */
-            color: #4285f4; /* 非選択時の文字色 */
+            background-color: #e8f0fe; 
+            color: #4285f4; 
             padding: 5px 12px;
             margin-right: 8px;
             margin-bottom: 8px;
@@ -102,18 +103,19 @@
             background-color: #d2e3fc;
         }
         .tag-filter-chip.active {
-            background-color: #4285f4; /* 選択時の背景色 */
-            color: white; /* 選択時の文字色 */
+            background-color: #4285f4; 
+            color: white; 
             border-color: #3367d6;
             font-weight: bold;
         }
 
-        /* イベントリストのスタイル */
+        /* ★イベントリストの元のグリッドスタイル（変更なし）★ */
         #events-list {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 25px;
         }
+        /* ★イベントカードの元のスタイル（変更なし）★ */
         .event-card {
             background-color: #e8f0fe;
             border-radius: 8px;
@@ -125,7 +127,34 @@
             transform: translateY(-5px);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
-        /* ... 他のカード内スタイルは変更なし ... */
+        /* ★画像サイズを元に戻す（max-width: 100%でカード幅に収める）★ */
+        .event-card .event-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            display: block; 
+        }
+        
+        /* カード内テキストスタイル */
+        .event-card h2 {
+            color: #4285f4;
+            margin-top: 0;
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+        .event-card p {
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+        .event-card .date {
+            font-weight: bold;
+            color: #34a853;
+        }
+        .event-card .location {
+            color: #ea4335;
+        }
+        /* イベント内タグリストのスタイル */
         .tags-list {
             margin-top: 10px;
             padding-top: 10px;
@@ -209,8 +238,8 @@
         const searchButton = document.getElementById('search-button');
         const tagChipsList = document.getElementById('tag-chips-list');
 
-        let allEventsData = []; // 取得した全イベントデータを保持する配列
-        let activeTag = ''; // 現在選択されているタグを保持する変数
+        let allEventsData = []; 
+        let activeTag = ''; 
 
         /**
          * Firestoreからデータを取得し、グローバル変数に保存後、タグフィルターを生成する
@@ -221,7 +250,7 @@
                 const q = query(eventsCollectionRef, orderBy("date", "asc"));
 
                 const querySnapshot = await getDocs(q);
-                allEventsData = []; // データをリセット
+                allEventsData = []; 
                 let uniqueTags = new Set();
 
                 querySnapshot.forEach((doc) => {
@@ -273,20 +302,22 @@
                 chip.addEventListener('click', (e) => {
                     // アクティブタグを更新
                     const newTag = e.target.dataset.tag;
-                    activeTag = newTag === activeTag ? '' : newTag; // 同じタグを再度クリックしたら解除
+                    
+                    // 現在のタグと同じタグをクリックしたら解除し、そうでなければ設定する
+                    activeTag = (newTag === activeTag && newTag !== '') ? '' : newTag;
                     
                     // アクティブクラスの更新
                     document.querySelectorAll('.tag-filter-chip').forEach(c => {
                         c.classList.remove('active');
                     });
+
+                    // 選択されたタグにactiveクラスを設定（または「すべて」に設定）
                     if (activeTag === '') {
                         allTagChip.classList.add('active');
                     } else {
-                        e.target.classList.add('active');
+                        // 新しいアクティブタグに対応するチップにactiveクラスを設定
+                        document.querySelector(`.tag-filter-chip[data-tag="${activeTag}"]`).classList.add('active');
                     }
-                    
-                    // キーワード検索をクリア（オプション）
-                    // searchInput.value = '';
 
                     // イベントリストを再描画
                     filterAndRenderEvents();
@@ -310,14 +341,14 @@
                 const location = (event.location || '').toLowerCase();
                 const eventTags = Array.isArray(event.tags) ? event.tags.map(tag => tag.toLowerCase()) : [];
 
-                // 1. キーワードフィルタリング (タイトル、説明、場所、タグのいずれかに一致)
+                // 1. キーワードフィルタリング
                 const keywordMatch = !keyword || 
                                      title.includes(keyword) ||
                                      description.includes(keyword) ||
                                      location.includes(keyword) ||
                                      eventTags.some(tag => tag.includes(keyword));
 
-                // 2. タグフィルタリング (選択されたタグがイベントのtags配列に含まれているか)
+                // 2. タグフィルタリング
                 const tagMatch = !tagFilter || eventTags.includes(tagFilter);
 
                 return keywordMatch && tagMatch;
@@ -361,9 +392,7 @@
 
         // --- イベントリスナーの設定 ---
 
-        // 検索ボタンがクリックされたとき、またはEnterキーが押されたとき
         const handleSearch = () => {
-             // タグフィルターと併用するため、ただ描画関数を呼び出す
             filterAndRenderEvents();
         };
 
@@ -378,9 +407,7 @@
         // --- ページロード時の初期処理 ---
 
         window.addEventListener('load', async () => {
-            // 1. 全データを取得し、タグフィルターをセットアップ
             await fetchAllEventsAndSetupTags(); 
-            // 2. フィルタリングを実行して初回描画
             filterAndRenderEvents();
         });
     </script>
