@@ -29,7 +29,7 @@
             font-weight: 600;
         }
         
-        /* ★検索フォームのスタイル★ */
+        /* 検索フォームのスタイル */
         #search-controls {
             display: flex;
             gap: 10px;
@@ -56,15 +56,14 @@
             transition: background-color 0.2s ease;
         }
         #search-button {
-            background-color: #34a853; /* Googleグリーン */
+            background-color: #34a853;
         }
         #search-button:hover {
             background-color: #2c8e42;
         }
-        /* ★クリアボタンのスタイル★ */
         #clear-button {
-            background-color: #fbbc05; /* Googleイエロー */
-            white-space: nowrap; /* ボタン内のテキストが折り返さないようにする */
+            background-color: #fbbc05;
+            white-space: nowrap;
         }
         #clear-button:hover {
             background-color: #e0ac03;
@@ -111,6 +110,22 @@
         .event-card .location {
             color: #ea4335;
         }
+        /* ★タグ表示用のスタイルを追加★ */
+        .event-tags {
+            margin-top: 10px;
+            font-size: 0.85em;
+            color: #757575;
+        }
+        .event-tag {
+            display: inline-block;
+            background-color: #cccccc;
+            color: #333;
+            padding: 3px 8px;
+            margin-right: 5px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+        }
+        /* ロードメッセージなどのスタイルは省略 */
         .loading-message, .error-message {
             text-align: center;
             font-size: 1.1em;
@@ -171,7 +186,7 @@
         const eventsListContainer = document.getElementById('events-list');
         const searchInput = document.getElementById('search-input');
         const searchButton = document.getElementById('search-button');
-        const clearButton = document.getElementById('clear-button'); // ★クリアボタンの参照を追加★
+        const clearButton = document.getElementById('clear-button');
 
         // Firestoreから全データを取得し、キーワードでフィルタリングする関数
         async function loadEvents(keyword = '') {
@@ -179,12 +194,11 @@
 
             eventsListContainer.innerHTML = '<p class="loading-message">イベント情報をロード中...</p>';
             searchButton.disabled = true;
-            clearButton.disabled = true; // ★ボタンを無効化★
+            clearButton.disabled = true;
 
             try {
                 // 1. Firestoreから全データを取得
                 const eventsCollectionRef = collection(db, "events");
-                // 日付で昇順に並べ替え
                 const q = query(eventsCollectionRef, orderBy("date", "asc"));
 
                 const querySnapshot = await getDocs(q);
@@ -200,16 +214,13 @@
                 }
 
                 // 2. クライアントサイドフィルタリングの実行
-                // 今日の日付（時刻を 00:00:00 に設定）を取得
                 const now = new Date();
                 now.setHours(0, 0, 0, 0); 
                 
                 let filteredEvents = eventsData.filter(event => {
-                    // event.date が Firestore Timestamp または文字列であることを考慮してDateオブジェクトに変換
                     const eventDateObj = event.date ? (event.date.toDate ? event.date.toDate() : new Date(event.date)) : null;
 
-                    // ★過去の日付を非表示にする条件★
-                    // イベント日付が存在しない、またはイベント日付が今日より古い場合は false (除外)
+                    // 過去の日付を非表示にする条件
                     if (!eventDateObj || eventDateObj < now) {
                         return false; 
                     }
@@ -219,19 +230,23 @@
                         return true;
                     }
 
-                    // キーワードフィルタリング: タイトル、説明、場所のいずれかにキーワードが含まれるかチェック
+                    // キーワードフィルタリング: タイトル、説明、場所、★タグ★のいずれかにキーワードが含まれるかチェック
                     const title = (event.title || '').toLowerCase();
                     const description = (event.description || '').toLowerCase();
                     const location = (event.location || '').toLowerCase();
+                    // ★タグデータが存在する場合、文字列に変換して検索対象に含める★
+                    const tags = Array.isArray(event.tags) ? event.tags.join(' ').toLowerCase() : (event.tags || '').toLowerCase();
+
 
                     return title.includes(lowerCaseKeyword) ||
                            description.includes(lowerCaseKeyword) ||
-                           location.includes(lowerCaseKeyword);
+                           location.includes(lowerCaseKeyword) ||
+                           tags.includes(lowerCaseKeyword); // ★tagsフィールドを検索対象に追加★
                 });
 
 
                 // 3. フィルタリングされたデータをHTMLに描画
-                eventsListContainer.innerHTML = ''; // 既存のコンテンツをクリア
+                eventsListContainer.innerHTML = '';
 
                 if (filteredEvents.length === 0) {
                     const message = lowerCaseKeyword 
@@ -247,11 +262,27 @@
 
                     // 描画用のデータ整形
                     const title = eventData.title || 'タイトルなし';
-                    // dateがTimestamp型の場合はtoDate().toLocaleDateString()で整形
                     const date = eventData.date ? (eventData.date.toDate ? eventData.date.toDate().toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' }) : eventData.date) : '日付未定';
                     const description = eventData.description || '説明なし';
                     const location = eventData.location || '場所未定';
                     const imageUrl = eventData.imageUrl || ''; 
+
+                    // ★タグのHTML生成★
+                    let tagsHtml = '';
+                    if (Array.isArray(eventData.tags) && eventData.tags.length > 0) {
+                        const tagSpans = eventData.tags.map(tag => 
+                            `<span class="event-tag">${tag}</span>`
+                        ).join('');
+                        tagsHtml = `<div class="event-tags">${tagSpans}</div>`;
+                    }
+                    // ★タグのHTML生成 (tagsが文字列の場合)★
+                    else if (typeof eventData.tags === 'string' && eventData.tags.trim()) {
+                        const tagSpans = eventData.tags.split(',').map(tag => 
+                            `<span class="event-tag">${tag.trim()}</span>`
+                        ).join('');
+                        tagsHtml = `<div class="event-tags">${tagSpans}</div>`;
+                    }
+
 
                     eventCard.innerHTML = `
                         ${imageUrl ? `<img src="${imageUrl}" alt="${title}" class="event-image">` : ''}
@@ -259,7 +290,7 @@
                         <p class="date">日付: ${date}</p>
                         <p><strong>場所:</strong> ${location}</p>
                         <p>${description}</p>
-                    `;
+                        ${tagsHtml} `;
                     eventsListContainer.appendChild(eventCard);
                 });
 
@@ -268,25 +299,21 @@
                 eventsListContainer.innerHTML = `<p class="error-message">イベントのロードに失敗しました。<br>エラー: ${error.message}</p>`;
             } finally {
                 searchButton.disabled = false;
-                clearButton.disabled = false; // ★ボタンを再度有効化★
+                clearButton.disabled = false;
             }
         }
 
-        // --- イベントリスナーの設定 ---
-
-        // 検索ボタンがクリックされたとき
+        // --- イベントリスナーの設定 (変更なし) ---
         searchButton.addEventListener('click', () => {
             const keyword = searchInput.value;
             loadEvents(keyword);
         });
 
-        // ★クリアボタンがクリックされたとき★
         clearButton.addEventListener('click', () => {
-            searchInput.value = ''; // 入力値を空にする
-            loadEvents(''); // キーワードなしでロード（全件表示）
+            searchInput.value = '';
+            loadEvents('');
         });
 
-        // キー入力（Enterキー）でも検索を実行できるようにする
         searchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -294,11 +321,9 @@
             }
         });
         
-        // ページロード時に自動的にイベントを読み込む
         window.addEventListener('load', () => {
-            loadEvents(''); // 初期表示としてキーワードなしで全件ロード
+            loadEvents('');
         });
-
     </script>
 </body>
 </html>
