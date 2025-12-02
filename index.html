@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>イベント一覧 (認証機能付き) - My Firestore App</title>
+    <title>イベント一覧 (タグボタン絞り込み付き) - My Firestore App</title>
     <style>
         /* 既存のスタイリング */
         body {
@@ -25,63 +25,108 @@
         h1 {
             color: #de3c21;
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
             font-weight: 600;
         }
-        /* ★認証UIのスタイル★ */
-        #auth-ui {
-            text-align: right;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #eee;
+        
+        /* 検索フォームのスタイル */
+        #search-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px; 
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #f9f9f9;
         }
-        #login-button, #logout-button {
-            padding: 8px 15px;
-            margin-left: 10px;
+        #search-input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        #search-button, #clear-button {
+            padding: 10px 15px;
+            color: white;
             border: none;
             border-radius: 5px;
+            font-size: 1em;
             cursor: pointer;
-            font-size: 0.9em;
-            transition: background-color 0.2s;
+            transition: background-color 0.2s ease;
         }
-        #login-button {
-            background-color: #4285f4; /* Googleブルー */
-            color: white;
-        }
-        #login-button:hover {
-            background-color: #3367d6;
-        }
-        #logout-button {
-            background-color: #fbbc05; /* Googleイエロー */
-            color: #333;
-        }
-        #logout-button:hover {
-            background-color: #e0ac03;
-        }
-
-        /* 検索フォームのスタイル (省略) */
-        #search-controls { display: flex; gap: 10px; margin-bottom: 15px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9; }
-        #search-input { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 1em; }
-        #search-button, #clear-button { padding: 10px 15px; color: white; border: none; border-radius: 5px; font-size: 1em; cursor: pointer; transition: background-color 0.2s ease; }
         #search-button { background-color: #34a853; }
         #search-button:hover { background-color: #2c8e42; }
         #clear-button { background-color: #fbbc05; white-space: nowrap; }
         #clear-button:hover { background-color: #e0ac03; }
-        #tag-list { padding: 10px 0 25px 0; margin-bottom: 20px; border-bottom: 1px solid #eee; }
-        .tag-button { background-color: #e0e0e0; color: #333; border: 1px solid #ccc; padding: 6px 12px; margin-right: 8px; margin-bottom: 8px; border-radius: 18px; font-size: 0.9em; cursor: pointer; transition: background-color 0.2s, color 0.2s, border-color 0.2s; display: inline-block; }
-        .tag-button:hover { background-color: #d0d0d0; }
-        .tag-button.active { background-color: #4285f4; color: white; border-color: #4285f4; font-weight: bold; }
-        /* 既存のスタイル (省略) */
-        #events-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; }
-        .event-card { background-color: #e8f0fe; border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); transition: transform 0.2s ease-in-out; }
-        .event-card:hover { transform: translateY(-5px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); }
-        .event-card .event-image { max-width: 100%; height: auto; border-radius: 5px; margin-bottom: 15px; display: block; }
+
+        /* ★タグボタンのスタイル★ */
+        #tag-list {
+            padding: 10px 0 25px 0;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .tag-button {
+            background-color: #e0e0e0;
+            color: #333;
+            border: 1px solid #ccc;
+            padding: 6px 12px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            border-radius: 18px; /* 丸いボタン */
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+            display: inline-block;
+        }
+        .tag-button:hover {
+            background-color: #d0d0d0;
+        }
+        .tag-button.active {
+            background-color: #4285f4; /* Googleブルー */
+            color: white;
+            border-color: #4285f4;
+            font-weight: bold;
+        }
+
+        /* 既存のスタイル */
+        #events-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+        }
+        .event-card {
+            background-color: #e8f0fe;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: transform 0.2s ease-in-out;
+        }
+        .event-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .event-card .event-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            display: block; 
+        }
         .event-card h2 { color: #4285f4; margin-top: 0; font-size: 1.5em; margin-bottom: 10px; }
         .event-card p { margin-bottom: 8px; font-size: 0.95em; }
         .event-card .date { font-weight: bold; color: #34a853; }
         .event-card .location { color: #ea4335; }
         .event-tags { margin-top: 10px; font-size: 0.85em; color: #757575; }
-        .event-tag { display: inline-block; background-color: #cccccc; color: #333; padding: 3px 8px; margin-right: 5px; margin-bottom: 5px; border-radius: 4px; }
+        .event-tag {
+            display: inline-block;
+            background-color: #cccccc;
+            color: #333;
+            padding: 3px 8px;
+            margin-right: 5px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+        }
         .loading-message, .error-message { text-align: center; font-size: 1.1em; margin-top: 20px; padding: 15px; border-radius: 5px; }
         .loading-message { background-color: #fff3cd; color: #856404; }
         .error-message { background-color: #f8d7da; color: #721c24; }
@@ -90,12 +135,6 @@
 </head>
 <body>
     <div class="container">
-        <div id="auth-ui">
-            <span id="user-status">ログインしていません。</span>
-            <button id="login-button">Googleでログイン</button>
-            <button id="logout-button" style="display:none;">ログアウト</button>
-        </div>
-        
         <h1>開催予定のイベント</h1>
 
         <div id="search-controls">
@@ -103,8 +142,277 @@
             <button id="search-button">検索</button>
             <button id="clear-button" title="検索条件をクリアして全件表示">クリア</button>
         </div>
+
         <div id="tag-list">
             </div>
         
         <div id="events-list">
-            <p class="loading-message" id
+            <p class="loading-message" id="initial-message">イベント情報をロード中...</p>
+        </div>
+    </div>
+
+    <script type="module">
+        // Firebase SDKの各モジュールをインポートします
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+        import { getFirestore, collection, getDocs, orderBy, query } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+        // --- あなたのFirebaseプロジェクト設定 ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyBH8EPKOwIBIMR16Z7PTECc2Lp0Y5cfkHQ",
+            authDomain: "november5th-a1336.firebaseapp.com",
+            projectId: "november5th-a1336",
+            storageBucket: "november5th-a1336.firebasestorage.app",
+            messagingSenderId: "11537951889",
+            appId: "1:11537951889:web:d783b2298fc90f88a3a330"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // DOM要素への参照を取得
+        const eventsListContainer = document.getElementById('events-list');
+        const searchInput = document.getElementById('search-input');
+        const searchButton = document.getElementById('search-button');
+        const clearButton = document.getElementById('clear-button');
+        const tagListContainer = document.getElementById('tag-list'); // ★タグリストコンテナ★
+        
+        // データをキャッシュするためのグローバル変数と現在のフィルタリング状態
+        let allEventsCache = []; 
+        let currentActiveTag = ''; 
+
+        /**
+         * Firestoreから全データを取得し、タグリストを生成する
+         * @returns {Array} 全イベントデータ
+         */
+        async function fetchAllEvents() {
+            if (allEventsCache.length > 0) {
+                return allEventsCache; // キャッシュがあればそれを使用
+            }
+
+            try {
+                const eventsCollectionRef = collection(db, "events");
+                const q = query(eventsCollectionRef, orderBy("date", "asc"));
+                const querySnapshot = await getDocs(q);
+                
+                let eventsData = [];
+                let uniqueTags = new Set(); 
+
+                querySnapshot.forEach((doc) => {
+                    const eventData = doc.data();
+                    eventsData.push(eventData);
+
+                    // タグを収集
+                    const tagsArray = Array.isArray(eventData.tags) ? eventData.tags : (typeof eventData.tags === 'string' ? eventData.tags.split(',') : []);
+                    tagsArray.forEach(tag => {
+                        const t = tag.trim();
+                        if (t) uniqueTags.add(t);
+                    });
+                });
+
+                allEventsCache = eventsData;
+                
+                // タグボタンを生成
+                createTagButtons(Array.from(uniqueTags)); 
+                
+                return eventsData;
+            } catch (error) {
+                console.error("イベントの取得中にエラーが発生しました:", error);
+                eventsListContainer.innerHTML = `<p class="error-message">イベントのロードに失敗しました。<br>エラー: ${error.message}</p>`;
+                return [];
+            }
+        }
+
+        /**
+         * タグボタンを動的に生成し、イベントリスナーを設定する
+         * @param {Array<string>} tags - 重複のないタグの配列
+         */
+        function createTagButtons(tags) {
+            tagListContainer.innerHTML = '';
+            
+            // 「全て」ボタン
+            const allButton = document.createElement('button');
+            allButton.textContent = "全て";
+            allButton.className = 'tag-button';
+            allButton.classList.add('active'); // 初期状態では「全て」をアクティブに
+            allButton.addEventListener('click', () => handleTagClick(""));
+            tagListContainer.appendChild(allButton);
+
+            tags.sort().forEach(tag => {
+                const button = document.createElement('button');
+                button.textContent = tag;
+                button.className = 'tag-button';
+                button.setAttribute('data-tag', tag); // フィルタリング用にタグ名を保持
+                button.addEventListener('click', () => handleTagClick(tag));
+                tagListContainer.appendChild(button);
+            });
+        }
+        
+        /**
+         * タグボタンクリック時の処理
+         * @param {string} tag - クリックされたタグ名
+         */
+        function handleTagClick(tag) {
+            // キーワード検索をリセット
+            searchInput.value = '';
+            
+            // クリックしたタグが既にアクティブな場合は、フィルタリングを解除する (トグル機能)
+            const newTag = (currentActiveTag === tag) ? "" : tag;
+            currentActiveTag = newTag; 
+            
+            // UIを更新
+            updateTagButtonsUI(newTag);
+
+            // フィルタリングを実行
+            loadEvents("", newTag);
+        }
+
+        /**
+         * アクティブなタグボタンのスタイルを更新
+         * @param {string} activeTag - 現在アクティブなタグ
+         */
+        function updateTagButtonsUI(activeTag) {
+            document.querySelectorAll('.tag-button').forEach(button => {
+                button.classList.remove('active');
+                if (button.getAttribute('data-tag') === activeTag || (!activeTag && button.textContent === "全て")) {
+                    button.classList.add('active');
+                }
+            });
+        }
+
+
+        /**
+         * イベントをフィルタリングして表示するメイン関数
+         * @param {string} keyword - 検索キーワード
+         * @param {string} selectedTag - 選択されたタグ (currentActiveTagを使用)
+         */
+        async function loadEvents(keyword = '', selectedTag = currentActiveTag) {
+            const lowerCaseKeyword = keyword.trim().toLowerCase();
+            const trimSelectedTag = selectedTag.trim();
+
+            // UIを更新
+            eventsListContainer.innerHTML = '<p class="loading-message">イベント情報をロード中...</p>';
+            searchButton.disabled = true;
+            clearButton.disabled = true;
+            document.querySelectorAll('.tag-button').forEach(b => b.disabled = true);
+
+            const eventsData = await fetchAllEvents();
+            if (eventsData.length === 0) {
+                 searchButton.disabled = false;
+                 clearButton.disabled = false;
+                 document.querySelectorAll('.tag-button').forEach(b => b.disabled = false);
+                 return;
+            }
+
+            // 1. 日付フィルタリングと複合フィルタリング
+            const now = new Date();
+            now.setHours(0, 0, 0, 0); 
+            
+            let filteredEvents = eventsData.filter(event => {
+                const eventDateObj = event.date ? (event.date.toDate ? event.date.toDate() : new Date(event.date)) : null;
+
+                // 過去の日付を非表示にする条件
+                if (!eventDateObj || eventDateObj < now) {
+                    return false; 
+                }
+                
+                // ★タグフィルタリング★
+                if (trimSelectedTag) {
+                    const eventTags = Array.isArray(event.tags) ? event.tags : (typeof event.tags === 'string' ? event.tags.split(',').map(t => t.trim()) : []);
+                    if (!eventTags.includes(trimSelectedTag)) {
+                        return false; 
+                    }
+                }
+                
+                // ★キーワードフィルタリング★
+                if (lowerCaseKeyword) {
+                    const title = (event.title || '').toLowerCase();
+                    const description = (event.description || '').toLowerCase();
+                    const location = (event.location || '').toLowerCase();
+                    const tags = Array.isArray(event.tags) ? event.tags.join(' ').toLowerCase() : (event.tags || '').toLowerCase();
+
+                    if (!(title.includes(lowerCaseKeyword) ||
+                           description.includes(lowerCaseKeyword) ||
+                           location.includes(lowerCaseKeyword) ||
+                           tags.includes(lowerCaseKeyword))) {
+                        return false; 
+                    }
+                }
+
+                return true;
+            });
+
+
+            // 2. フィルタリングされたデータをHTMLに描画 (省略 - 前回と同じ描画ロジック)
+            eventsListContainer.innerHTML = ''; 
+
+            if (filteredEvents.length === 0) {
+                let message = 'イベントは見つかりませんでした。';
+                if (lowerCaseKeyword || trimSelectedTag) {
+                    message = `検索条件に一致する開催予定のイベントは見つかりませんでした。`;
+                }
+                eventsListContainer.innerHTML = `<p class="loading-message">${message}</p>`;
+            } else {
+                filteredEvents.forEach((eventData) => {
+                    const eventCard = document.createElement('div');
+                    eventCard.className = 'event-card';
+
+                    const title = eventData.title || 'タイトルなし';
+                    const date = eventData.date ? (eventData.date.toDate ? eventData.date.toDate().toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' }) : eventData.date) : '日付未定';
+                    const description = eventData.description || '説明なし';
+                    const location = eventData.location || '場所未定';
+                    const imageUrl = eventData.imageUrl || ''; 
+
+                    // タグのHTML生成
+                    let tagsHtml = '';
+                    const tagsArray = Array.isArray(eventData.tags) ? eventData.tags : (typeof eventData.tags === 'string' ? eventData.tags.split(',').map(t => t.trim()) : []);
+                    if (tagsArray.length > 0) {
+                        const tagSpans = tagsArray.map(tag => 
+                            `<span class="event-tag">${tag.trim()}</span>`
+                        ).join('');
+                        tagsHtml = `<div class="event-tags">${tagSpans}</div>`;
+                    }
+
+                    eventCard.innerHTML = `
+                        ${imageUrl ? `<img src="${imageUrl}" alt="${title}" class="event-image">` : ''}
+                        <h2>${title}</h2>
+                        <p class="date">日付: ${date}</p>
+                        <p><strong>場所:</strong> ${location}</p>
+                        <p>${description}</p>
+                        ${tagsHtml}
+                    `;
+                    eventsListContainer.appendChild(eventCard);
+                });
+            }
+
+            searchButton.disabled = false;
+            clearButton.disabled = false;
+            document.querySelectorAll('.tag-button').forEach(b => b.disabled = false);
+        }
+
+        // --- イベントリスナーの設定 ---
+
+        // 検索ボタンがクリックされたとき (キーワード検索)
+        searchButton.addEventListener('click', () => {
+            const keyword = searchInput.value;
+            currentActiveTag = ""; // キーワード検索時はタグ選択をリセット
+            updateTagButtonsUI("");
+            loadEvents(keyword, "");
+        });
+
+        // クリアボタンがクリックされたとき
+        clearButton.addEventListener('click', () => {
+            searchInput.value = '';
+            currentActiveTag = ""; // タグ選択もリセット
+            updateTagButtonsUI("");
+            loadEvents('', "");
+        });
+
+        // ページロード時に全データを取得し、キャッシュ/初期表示を行う
+        window.addEventListener('load', async () => {
+            await fetchAllEvents(); 
+            loadEvents('', ''); 
+        });
+
+    </script>
+</body>
+</html>
