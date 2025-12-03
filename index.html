@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>イベント一覧 (タグボタン絞り込み付き) - My Firestore App</title>
+    <title>イベント一覧 (ティファニーブルー) - My Firestore App</title>
     <style>
         /* 既存のスタイリング */
         body {
@@ -23,110 +23,86 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
         h1 {
-            color: #de3c21;
+            color: #00A3A0; /* ★ティファニーブルー系に変更★ */
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             font-weight: 600;
         }
-        
-        /* 検索フォームのスタイル */
-        #search-controls {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px; 
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            background-color: #f9f9f9;
-        }
-        #search-input {
-            flex-grow: 1;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 1em;
-        }
-        #search-button, #clear-button {
-            padding: 10px 15px;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 1em;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
-        #search-button { background-color: #34a853; }
-        #search-button:hover { background-color: #2c8e42; }
-        #clear-button { background-color: #fbbc05; white-space: nowrap; }
-        #clear-button:hover { background-color: #e0ac03; }
-
-        /* ★タグボタンのスタイル★ */
-        #tag-list {
-            padding: 10px 0 25px 0;
+        /* 認証UIのスタイル */
+        #auth-ui {
+            text-align: right;
             margin-bottom: 20px;
+            padding-bottom: 10px;
             border-bottom: 1px solid #eee;
         }
-        .tag-button {
-            background-color: #e0e0e0;
-            color: #333;
-            border: 1px solid #ccc;
-            padding: 6px 12px;
-            margin-right: 8px;
-            margin-bottom: 8px;
-            border-radius: 18px; /* 丸いボタン */
-            font-size: 0.9em;
+        #login-button, #logout-button {
+            padding: 8px 15px;
+            margin-left: 10px;
+            border: none;
+            border-radius: 5px;
             cursor: pointer;
-            transition: background-color 0.2s, color 0.2s, border-color 0.2s;
-            display: inline-block;
+            font-size: 0.9em;
+            transition: background-color 0.2s;
         }
-        .tag-button:hover {
-            background-color: #d0d0d0;
-        }
-        .tag-button.active {
-            background-color: #4285f4; /* Googleブルー */
+        #login-button {
+            background-color: #0ABAB5; /* ★ティファニーブルー★ */
             color: white;
-            border-color: #4285f4;
+        }
+        #login-button:hover {
+            background-color: #00A3A0;
+        }
+        #logout-button {
+            background-color: #fbbc05;
+            color: #333;
+        }
+        #logout-button:hover {
+            background-color: #e0ac03;
+        }
+
+        /* 検索フォームのスタイル */
+        #search-controls { display: flex; gap: 10px; margin-bottom: 15px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9; }
+        #search-input { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 1em; }
+        #search-button, #clear-button { padding: 10px 15px; color: white; border: none; border-radius: 5px; font-size: 1em; cursor: pointer; transition: background-color 0.2s ease; }
+        #search-button { 
+            background-color: #00A3A0; /* ★ティファニーブルー系★ */
+        }
+        #search-button:hover { 
+            background-color: #008f8c;
+        }
+        #clear-button { background-color: #fbbc05; white-space: nowrap; }
+        #clear-button:hover { background-color: #e0ac03; }
+        
+        /* タグボタンのスタイル */
+        #tag-list { padding: 10px 0 25px 0; margin-bottom: 20px; border-bottom: 1px solid #eee; }
+        .tag-button { background-color: #e0e0e0; color: #333; border: 1px solid #ccc; padding: 6px 12px; margin-right: 8px; margin-bottom: 8px; border-radius: 18px; font-size: 0.9em; cursor: pointer; transition: background-color 0.2s, color 0.2s, border-color 0.2s; display: inline-block; }
+        .tag-button:hover { background-color: #d0d0d0; }
+        .tag-button.active {
+            background-color: #0ABAB5; /* ★ティファニーブルー★ */
+            color: white;
+            border-color: #0ABAB5;
             font-weight: bold;
         }
 
-        /* 既存のスタイル */
-        #events-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 25px;
-        }
+        /* イベントカードのスタイル */
+        #events-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; }
         .event-card {
-            background-color: #e8f0fe;
+            background-color: #E0FFFF; /* ★薄いティファニーブルー★ */
             border-radius: 8px;
             padding: 20px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             transition: transform 0.2s ease-in-out;
         }
-        .event-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        .event-card:hover { transform: translateY(-5px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); }
+        .event-card .event-image { max-width: 100%; height: auto; border-radius: 5px; margin-bottom: 15px; display: block; }
+        .event-card h2 { 
+            color: #0ABAB5; /* ★ティファニーブルー★ */
+            margin-top: 0; font-size: 1.5em; margin-bottom: 10px; 
         }
-        .event-card .event-image {
-            max-width: 100%;
-            height: auto;
-            border-radius: 5px;
-            margin-bottom: 15px;
-            display: block; 
-        }
-        .event-card h2 { color: #4285f4; margin-top: 0; font-size: 1.5em; margin-bottom: 10px; }
         .event-card p { margin-bottom: 8px; font-size: 0.95em; }
-        .event-card .date { font-weight: bold; color: #34a853; }
-        .event-card .location { color: #ea4335; }
+        .event-card .date { font-weight: bold; color: #34a853; } /* 日付は視認性のためグリーン維持 */
+        .event-card .location { color: #ea4335; } /* 場所は視認性のためレッド維持 */
         .event-tags { margin-top: 10px; font-size: 0.85em; color: #757575; }
-        .event-tag {
-            display: inline-block;
-            background-color: #cccccc;
-            color: #333;
-            padding: 3px 8px;
-            margin-right: 5px;
-            margin-bottom: 5px;
-            border-radius: 4px;
-        }
+        .event-tag { display: inline-block; background-color: #cccccc; color: #333; padding: 3px 8px; margin-right: 5px; margin-bottom: 5px; border-radius: 4px; }
         .loading-message, .error-message { text-align: center; font-size: 1.1em; margin-top: 20px; padding: 15px; border-radius: 5px; }
         .loading-message { background-color: #fff3cd; color: #856404; }
         .error-message { background-color: #f8d7da; color: #721c24; }
@@ -135,7 +111,13 @@
 </head>
 <body>
     <div class="container">
-        <h1>開催予定のイベント</h1>
+        <div id="auth-ui">
+            <span id="user-status">ログインしていません。</span>
+            <button id="login-button">Googleでログイン</button>
+            <button id="logout-button" style="display:none;">ログアウト</button>
+        </div>
+        
+        <h1>2025から2026年開催予定のイベント</h1>
 
         <div id="search-controls">
             <input type="text" id="search-input" placeholder="キーワードを入力して絞り込み (例: 東京, AI)">
@@ -155,6 +137,14 @@
         // Firebase SDKの各モジュールをインポートします
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
         import { getFirestore, collection, getDocs, orderBy, query } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+        import { 
+            getAuth, 
+            signInWithPopup, 
+            GoogleAuthProvider, 
+            onAuthStateChanged,
+            signOut 
+        } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+
 
         // --- あなたのFirebaseプロジェクト設定 ---
         const firebaseConfig = {
@@ -168,26 +158,45 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const auth = getAuth(app); 
 
         // DOM要素への参照を取得
         const eventsListContainer = document.getElementById('events-list');
         const searchInput = document.getElementById('search-input');
         const searchButton = document.getElementById('search-button');
         const clearButton = document.getElementById('clear-button');
-        const tagListContainer = document.getElementById('tag-list'); // ★タグリストコンテナ★
+        const tagListContainer = document.getElementById('tag-list');
         
-        // データをキャッシュするためのグローバル変数と現在のフィルタリング状態
+        const loginButton = document.getElementById('login-button');
+        const logoutButton = document.getElementById('logout-button');
+        const userStatus = document.getElementById('user-status');
+
         let allEventsCache = []; 
         let currentActiveTag = ''; 
 
-        /**
-         * Firestoreから全データを取得し、タグリストを生成する
-         * @returns {Array} 全イベントデータ
-         */
-        async function fetchAllEvents() {
-            if (allEventsCache.length > 0) {
-                return allEventsCache; // キャッシュがあればそれを使用
+        // --- 認証機能の関数 ---
+        async function loginWithGoogle() {
+            const provider = new GoogleAuthProvider();
+            try {
+                await signInWithPopup(auth, provider);
+            } catch (error) {
+                console.error("Googleログインエラー:", error.message);
+                alert("ログインに失敗しました: " + error.message);
             }
+        }
+
+        async function signOutUser() {
+            try {
+                await signOut(auth);
+            } catch (error) {
+                console.error("ログアウトエラー:", error.message);
+                alert("ログアウトに失敗しました: " + error.message);
+            }
+        }
+
+        // --- Firestoreデータ取得・表示関数 ---
+        async function fetchAllEvents() {
+            if (allEventsCache.length > 0) { return allEventsCache; }
 
             try {
                 const eventsCollectionRef = collection(db, "events");
@@ -201,7 +210,6 @@
                     const eventData = doc.data();
                     eventsData.push(eventData);
 
-                    // タグを収集
                     const tagsArray = Array.isArray(eventData.tags) ? eventData.tags : (typeof eventData.tags === 'string' ? eventData.tags.split(',') : []);
                     tagsArray.forEach(tag => {
                         const t = tag.trim();
@@ -210,8 +218,6 @@
                 });
 
                 allEventsCache = eventsData;
-                
-                // タグボタンを生成
                 createTagButtons(Array.from(uniqueTags)); 
                 
                 return eventsData;
@@ -222,18 +228,12 @@
             }
         }
 
-        /**
-         * タグボタンを動的に生成し、イベントリスナーを設定する
-         * @param {Array<string>} tags - 重複のないタグの配列
-         */
         function createTagButtons(tags) {
             tagListContainer.innerHTML = '';
             
-            // 「全て」ボタン
             const allButton = document.createElement('button');
             allButton.textContent = "全て";
-            allButton.className = 'tag-button';
-            allButton.classList.add('active'); // 初期状態では「全て」をアクティブに
+            allButton.className = 'tag-button active';
             allButton.addEventListener('click', () => handleTagClick(""));
             tagListContainer.appendChild(allButton);
 
@@ -241,35 +241,22 @@
                 const button = document.createElement('button');
                 button.textContent = tag;
                 button.className = 'tag-button';
-                button.setAttribute('data-tag', tag); // フィルタリング用にタグ名を保持
+                button.setAttribute('data-tag', tag);
                 button.addEventListener('click', () => handleTagClick(tag));
                 tagListContainer.appendChild(button);
             });
         }
         
-        /**
-         * タグボタンクリック時の処理
-         * @param {string} tag - クリックされたタグ名
-         */
         function handleTagClick(tag) {
-            // キーワード検索をリセット
             searchInput.value = '';
             
-            // クリックしたタグが既にアクティブな場合は、フィルタリングを解除する (トグル機能)
             const newTag = (currentActiveTag === tag) ? "" : tag;
             currentActiveTag = newTag; 
             
-            // UIを更新
             updateTagButtonsUI(newTag);
-
-            // フィルタリングを実行
             loadEvents("", newTag);
         }
 
-        /**
-         * アクティブなタグボタンのスタイルを更新
-         * @param {string} activeTag - 現在アクティブなタグ
-         */
         function updateTagButtonsUI(activeTag) {
             document.querySelectorAll('.tag-button').forEach(button => {
                 button.classList.remove('active');
@@ -280,16 +267,10 @@
         }
 
 
-        /**
-         * イベントをフィルタリングして表示するメイン関数
-         * @param {string} keyword - 検索キーワード
-         * @param {string} selectedTag - 選択されたタグ (currentActiveTagを使用)
-         */
         async function loadEvents(keyword = '', selectedTag = currentActiveTag) {
             const lowerCaseKeyword = keyword.trim().toLowerCase();
             const trimSelectedTag = selectedTag.trim();
 
-            // UIを更新
             eventsListContainer.innerHTML = '<p class="loading-message">イベント情報をロード中...</p>';
             searchButton.disabled = true;
             clearButton.disabled = true;
@@ -303,27 +284,23 @@
                  return;
             }
 
-            // 1. 日付フィルタリングと複合フィルタリング
+            // フィルタリング
             const now = new Date();
             now.setHours(0, 0, 0, 0); 
             
             let filteredEvents = eventsData.filter(event => {
                 const eventDateObj = event.date ? (event.date.toDate ? event.date.toDate() : new Date(event.date)) : null;
 
-                // 過去の日付を非表示にする条件
-                if (!eventDateObj || eventDateObj < now) {
-                    return false; 
-                }
+                // 過去の日付を非表示
+                if (!eventDateObj || eventDateObj < now) { return false; }
                 
-                // ★タグフィルタリング★
+                // タグフィルタリング
                 if (trimSelectedTag) {
                     const eventTags = Array.isArray(event.tags) ? event.tags : (typeof event.tags === 'string' ? event.tags.split(',').map(t => t.trim()) : []);
-                    if (!eventTags.includes(trimSelectedTag)) {
-                        return false; 
-                    }
+                    if (!eventTags.includes(trimSelectedTag)) { return false; }
                 }
                 
-                // ★キーワードフィルタリング★
+                // キーワードフィルタリング
                 if (lowerCaseKeyword) {
                     const title = (event.title || '').toLowerCase();
                     const description = (event.description || '').toLowerCase();
@@ -333,16 +310,12 @@
                     if (!(title.includes(lowerCaseKeyword) ||
                            description.includes(lowerCaseKeyword) ||
                            location.includes(lowerCaseKeyword) ||
-                           tags.includes(lowerCaseKeyword))) {
-                        return false; 
-                    }
+                           tags.includes(lowerCaseKeyword))) { return false; }
                 }
-
                 return true;
             });
 
-
-            // 2. フィルタリングされたデータをHTMLに描画 (省略 - 前回と同じ描画ロジック)
+            // HTML描画
             eventsListContainer.innerHTML = ''; 
 
             if (filteredEvents.length === 0) {
@@ -362,7 +335,6 @@
                     const location = eventData.location || '場所未定';
                     const imageUrl = eventData.imageUrl || ''; 
 
-                    // タグのHTML生成
                     let tagsHtml = '';
                     const tagsArray = Array.isArray(eventData.tags) ? eventData.tags : (typeof eventData.tags === 'string' ? eventData.tags.split(',').map(t => t.trim()) : []);
                     if (tagsArray.length > 0) {
@@ -390,29 +362,47 @@
         }
 
         // --- イベントリスナーの設定 ---
+        loginButton.addEventListener('click', loginWithGoogle);
+        logoutButton.addEventListener('click', signOutUser);
 
-        // 検索ボタンがクリックされたとき (キーワード検索)
         searchButton.addEventListener('click', () => {
             const keyword = searchInput.value;
-            currentActiveTag = ""; // キーワード検索時はタグ選択をリセット
+            currentActiveTag = "";
             updateTagButtonsUI("");
             loadEvents(keyword, "");
         });
 
-        // クリアボタンがクリックされたとき
         clearButton.addEventListener('click', () => {
             searchInput.value = '';
-            currentActiveTag = ""; // タグ選択もリセット
+            currentActiveTag = "";
             updateTagButtonsUI("");
             loadEvents('', "");
         });
 
-        // ページロード時に全データを取得し、キャッシュ/初期表示を行う
-        window.addEventListener('load', async () => {
-            await fetchAllEvents(); 
-            loadEvents('', ''); 
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                searchButton.click();
+            }
         });
-
+        
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                userStatus.textContent = `ログイン中: ${user.displayName || user.email}`;
+                loginButton.style.display = 'none';
+                logoutButton.style.display = 'inline-block';
+            } else {
+                userStatus.textContent = 'ログインしていません。';
+                loginButton.style.display = 'inline-block';
+                logoutButton.style.display = 'none';
+            }
+            
+            if (allEventsCache.length === 0) {
+                 fetchAllEvents().then(() => {
+                     loadEvents('', ''); 
+                 });
+            }
+        });
     </script>
 </body>
 </html>
