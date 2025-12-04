@@ -211,7 +211,7 @@
         let favoriteEventIds = new Set(); 
         let currentView = 'all'; 
 
-        // --- 認証機能の関数 (変更なし) ---
+        // --- 認証機能の関数 ---
         async function loginWithGoogle() {
             const provider = new GoogleAuthProvider();
             try {
@@ -278,15 +278,14 @@
                     favoriteEventIds.add(eventId);
                 }
                 
-                // 現在のビューに応じてリフレッシュ（マイページの場合は更新で非表示になる可能性がある）
                 loadEvents(searchInput.value, currentActiveTag);
             } catch (error) {
                 console.error("お気に入り登録中にエラー:", error);
-                alert("お気に入り操作に失敗しました。");
+                alert("お気に入り操作に失敗しました。Firestoreのルールを確認してください。");
             }
         }
 
-        // --- Firestoreデータ取得・表示関数 (変更なし) ---
+        // --- Firestoreデータ取得・表示関数 ---
         async function fetchAllEvents() {
             if (allEventsCache.length > 0) { return allEventsCache; }
 
@@ -364,22 +363,20 @@
             allEventsButton.classList.remove('view-active');
             mypageButton.classList.remove('view-active');
             
-            // ビューとタイトルのテキストを切り替える
             if (currentView === 'all') {
                 allEventsButton.classList.add('view-active');
-                mainTitle.textContent = "イベントリスト"; // ★テキスト修正★
+                mainTitle.textContent = "イベントリスト"; 
                 tagListContainer.style.display = 'block'; 
                 searchButton.style.display = 'inline-block';
                 clearButton.style.display = 'inline-block';
             } else {
                 mypageButton.classList.add('view-active');
-                mainTitle.textContent = "お気に入り"; // ★テキスト修正★
+                mainTitle.textContent = "お気に入り"; 
                 tagListContainer.style.display = 'none'; 
                 searchButton.style.display = 'none';
                 clearButton.style.display = 'none';
             }
             
-            // マイページボタンはログイン時のみ表示
             const isUserLoggedIn = auth.currentUser !== null;
             mypageButton.style.display = isUserLoggedIn ? 'inline-block' : 'none';
             allEventsButton.style.display = isUserLoggedIn ? 'inline-block' : 'none';
@@ -425,7 +422,7 @@
                     if (!eventTags.includes(trimSelectedTag)) { return false; }
                 }
                 
-                // キーワードフィルタリング（マイページ時はキーワード検索は非推奨だが念のため残す）
+                // キーワードフィルタリング
                 if (lowerCaseKeyword) {
                     const title = (event.title || '').toLowerCase();
                     const description = (event.description || '').toLowerCase();
@@ -484,11 +481,15 @@
                     `;
                     eventsListContainer.appendChild(eventCard);
                     
+                    // ★★★ イベントリスナーの確実な設定 ★★★
                     if (auth.currentUser) {
-                        eventCard.querySelector('.favorite-button').addEventListener('click', (e) => {
-                            e.stopPropagation(); 
-                            toggleFavorite(eventId);
-                        });
+                        const favButton = eventCard.querySelector('.favorite-button');
+                        if (favButton) {
+                            favButton.addEventListener('click', (e) => {
+                                e.stopPropagation(); 
+                                toggleFavorite(eventId);
+                            });
+                        }
                     }
                 });
             }
