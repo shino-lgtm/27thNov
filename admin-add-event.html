@@ -18,7 +18,7 @@
             line-height: 1.6;
         }
         .container {
-            max-width: 600px; /* フォーム用に幅を狭く調整 */
+            max-width: 600px;
             margin: 20px auto;
             background-color: #ffffff;
             padding: 30px;
@@ -31,6 +31,27 @@
             margin-bottom: 20px;
             font-weight: 600;
         }
+        /* 認証UIのスタイル */
+        #auth-ui {
+            text-align: right; 
+            margin-bottom: 20px;
+        }
+        #login-button, #logout-button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.2s;
+        }
+        #login-button {
+            background-color: #0ABAB5;
+            color: white;
+        }
+        #logout-button {
+            background-color: #fbbc05;
+            color: #333;
+        }
         /* フォームグループのスタイル */
         .form-group {
             margin-bottom: 20px;
@@ -38,10 +59,9 @@
         .form-group label {
             display: block;
             margin-bottom: 5px;
-            font-weight: 600; /* 太字 */
+            font-weight: 600;
             color: #333;
         }
-        /* 入力フィールド全体のスタイル */
         .form-group input[type="text"],
         .form-group input[type="date"],
         .form-group textarea {
@@ -53,12 +73,6 @@
             font-size: 1em;
             transition: border-color 0.2s;
         }
-        .form-group input[type="text"]:focus,
-        .form-group input[type="date"]:focus,
-        .form-group textarea:focus {
-            border-color: #00A3A0; /* フォーカス時に色を変更 */
-            outline: none;
-        }
         .form-group textarea {
             resize: vertical;
             min-height: 100px; 
@@ -67,7 +81,7 @@
         #register-button {
             width: 100%;
             padding: 15px;
-            background-color: #0ABAB5; /* メインカラーを使用 */
+            background-color: #0ABAB5;
             color: white;
             border: none;
             border-radius: 5px;
@@ -76,8 +90,12 @@
             font-weight: bold;
             transition: background-color 0.2s;
         }
-        #register-button:hover {
+        #register-button:hover:not(:disabled) {
             background-color: #008f8c;
+        }
+        #register-button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
         }
         /* メッセージ表示用のスタイル */
         #message {
@@ -98,6 +116,12 @@
 </head>
 <body>
     <div class="container">
+        
+        <div id="auth-ui">
+            <span id="user-status">ログインしていません。</span>
+            <button id="login-button">Googleでログイン</button>
+            <button id="logout-button" style="display: none;">ログアウト</button>
+        </div>
         <h1>イベント新規追加</h1>
 
         <form id="addEventForm">
@@ -133,23 +157,30 @@
             </div>
 
 
-            <button type="submit" id="register-button">イベントを登録</button>
+            <button type="submit" id="register-button" disabled>イベントを登録</button>
         </form>
         
         <div id="message"></div>
     </div>
 
     <script type="module">
-        // Firebase SDKの各モジュールをインポートします
+        // Firebase SDKの各モジュールをインポート
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
         import { 
             getFirestore, 
             collection, 
-            addDoc, // イベント新規追加にはaddDocを使用
-            serverTimestamp // タイムスタンプ
+            addDoc, 
+            serverTimestamp 
         } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+        import { 
+            getAuth, 
+            signInWithPopup, 
+            GoogleAuthProvider, 
+            onAuthStateChanged,
+            signOut 
+        } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
-        // --- メインページから取得したFirebaseプロジェクト設定 ---
+        // --- Firebaseプロジェクト設定 (メインページから取得) ---
         const firebaseConfig = {
             apiKey: "AIzaSyBH8EPKOwIBIMR16Z7PTECc2Lp0Y5cfkHQ",
             authDomain: "november5th-a1336.firebaseapp.com",
@@ -161,30 +192,75 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app); 
+        const auth = getAuth(app); 
 
         // DOM要素への参照
         const addEventForm = document.getElementById('addEventForm');
         const messageDiv = document.getElementById('message');
         const eventsCollectionRef = collection(db, "events");
+        const registerButton = document.getElementById('register-button');
 
-        /**
-         * メッセージを表示する関数
-         * @param {string} text - 表示するメッセージ
-         * @param {boolean} isSuccess - 成功メッセージかどうか
+        // 認証DOM要素
+        const loginButton = document.getElementById('login-button');
+        const logoutButton = document.getElementById('logout-button');
+        const userStatus = document.getElementById('user-status');
+        const provider = new GoogleAuthProvider();
+
+        /** * メッセージを表示する関数 
          */
         function displayMessage(text, isSuccess) {
             messageDiv.textContent = text;
             messageDiv.className = isSuccess ? 'success' : 'error';
-            // 3秒後にメッセージを消す
             setTimeout(() => {
                 messageDiv.textContent = '';
                 messageDiv.className = '';
             }, 3000);
         }
 
+        // --- 認証機能 ---
+        async function loginWithGoogle() {
+            try {
+                await signInWithPopup(auth, provider);
+            } catch (error) {
+                console.error("Googleログインエラー:", error.message);
+                displayMessage("ログインに失敗しました: " + error.message, false);
+            }
+        }
+
+        async function signOutUser() {
+            try {
+                await signOut(auth);
+            } catch (error) {
+                console.error("ログアウトエラー:", error.message);
+                displayMessage("ログアウトに失敗しました: " + error.message, false);
+            }
+        }
+
+        /**
+         * フォームのアクセス権限とUIを更新する関数
+         */
+        function updateFormAccess(user) {
+            const isUserLoggedIn = user !== null;
+            registerButton.disabled = !isUserLoggedIn;
+            
+            if (!isUserLoggedIn) {
+                userStatus.textContent = 'ログインしていません。イベント登録にはログインが必要です。';
+            } else {
+                userStatus.textContent = `ログイン中: ${user.displayName || user.email}`;
+            }
+            
+            loginButton.style.display = isUserLoggedIn ? 'none' : 'inline-block';
+            logoutButton.style.display = isUserLoggedIn ? 'inline-block' : 'none';
+        }
+
         // --- フォーム送信イベントリスナー ---
         addEventForm.addEventListener('submit', async function(e) {
             e.preventDefault();
+            
+            if (!auth.currentUser) {
+                displayMessage("イベント登録にはログインが必要です。", false);
+                return;
+            }
             
             const title = document.getElementById('eventTitle').value;
             const dateStr = document.getElementById('eventDate').value;
@@ -193,7 +269,6 @@
             const imageUrl = document.getElementById('eventImageUrl').value;
             const tagsStr = document.getElementById('eventTags').value;
             
-            // タグをカンマで分割し、空白を除去した配列にする
             const tagsArray = tagsStr.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
 
             // 日付文字列をJavaScriptのDateオブジェクトに変換
@@ -206,12 +281,11 @@
 
             const newEventData = {
                 title: title,
-                // FirestoreにDateオブジェクトとして保存（メインページのフィルタリングに必要）
                 date: eventDate, 
                 location: location,
                 description: description,
                 imageUrl: imageUrl,
-                tags: tagsArray, // 配列として保存
+                tags: tagsArray, 
                 createdAt: serverTimestamp() 
             };
 
@@ -220,15 +294,22 @@
                 await addDoc(eventsCollectionRef, newEventData);
                 
                 displayMessage("🎉 イベントが正常に登録されました。", true);
-                
-                // フォームをリセット
-                addEventForm.reset();
+                addEventForm.reset(); // フォームをリセット
                 
             } catch (error) {
                 console.error("イベントの登録中にエラーが発生しました:", error);
                 displayMessage("イベント登録に失敗しました。エラー: " + error.message, false);
             }
         });
+
+        // --- 認証状態の監視 ---
+        onAuthStateChanged(auth, (user) => {
+            updateFormAccess(user);
+        });
+
+        // ボタンリスナーの設定
+        loginButton.addEventListener('click', loginWithGoogle);
+        logoutButton.addEventListener('click', signOutUser);
     </script>
 </body>
 </html>
