@@ -4,122 +4,138 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>管理者: イベント追加 - My Firestore App</title>
+    
+    <link rel="stylesheet" href="style.css"> 
+    
     <style>
-        /* CSSは省略 - 前回の回答と同じです */
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333; padding: 20px; }
-        .container { max-width: 600px; margin: 20px auto; background-color: #ffffff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); }
-        h1 { color: #de3c21; text-align: center; margin-bottom: 30px; }
-        form div { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: 600; color: #4285f4; }
-        input[type="text"], input[type="date"], textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 1em; }
-        textarea { resize: vertical; min-height: 100px; }
-        button { width: 100%; padding: 12px; background-color: #34a853; color: white; border: none; border-radius: 5px; font-size: 1.1em; cursor: pointer; transition: background-color 0.2s ease; }
-        button:hover:not(:disabled) { background-color: #2c8e42; }
-        button:disabled { background-color: #cccccc; cursor: not-allowed; }
-        #message { margin-top: 20px; padding: 15px; border-radius: 5px; text-align: center; font-weight: bold; display: none; }
-        .success { background-color: #d4edda; color: #155724; }
-        .error { background-color: #f8d7da; color: #721c24; }
+        /* ------------------------------------------- */
+        /* フォームのスタイルを統一するために追加/調整 */
+        /* ------------------------------------------- */
+        
+        /* 基本スタイル（メインページと共通の背景色など） */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4; 
+        }
+        header {
+            /* メインページと共通のヘッダー色を想定 */
+            background-color: #3f51b5; /* 例: 主要な色（青系） */
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 600px;
+            margin: 30px auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+            border-radius: 8px;
+        }
+        
+        /* 入力項目（フォーム）のスタイル */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        /* 入力フィールド全体を統一 */
+        .form-group input[type="text"],
+        .form-group input[type="date"],
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box; 
+            font-size: 16px;
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px; /* 詳細説明用に高さを確保 */
+        }
+        
+        /* 登録ボタンのスタイル */
+        .submit-button {
+            width: 100%;
+            padding: 15px;
+            /* 登録アクションを促す色を想定 */
+            background-color: #4CAF50; /* 例: 緑系 */
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: background-color 0.3s;
+        }
+        .submit-button:hover {
+            background-color: #45a049;
+        }
     </style>
 </head>
 <body>
+    <header>
+        <h1>管理者: イベント追加</h1>
+    </header>
+
     <div class="container">
-        <h1>イベント新規追加</h1>
-        <form id="add-event-form">
-            <div>
-                <label for="title">イベントタイトル (title):</label>
-                <input type="text" id="title" required>
+        <h2>イベント新規追加</h2>
+
+        <form id="addEventForm">
+            
+            <div class="form-group">
+                <label for="eventTitle">イベントタイトル (title):</label>
+                <input type="text" id="eventTitle" name="title" required>
             </div>
-            <div>
-                <label for="date">開催日 (date):</label>
-                <input type="date" id="date" required>
+
+            <div class="form-group">
+                <label for="eventDate">開催日 (date):</label>
+                <input type="date" id="eventDate" name="date" required>
             </div>
-            <div>
-                <label for="location">開催場所 (location):</label>
-                <input type="text" id="location" required>
+
+            <div class="form-group">
+                <label for="eventLocation">開催場所 (location):</label>
+                <input type="text" id="eventLocation" name="location" required>
             </div>
-            <div>
-                <label for="description">詳細説明 (description):</label>
-                <textarea id="description" required></textarea>
+
+            <div class="form-group">
+                <label for="eventDescription">詳細説明 (description):</label>
+                <textarea id="eventDescription" name="description" required></textarea>
             </div>
-            <div>
-                <label for="imageUrl">画像URL (imageUrl):</label>
-                <input type="text" id="imageUrl">
+
+            <div class="form-group">
+                <label for="eventImageUrl">画像URL (imageUrl):</label>
+                <input type="text" id="eventImageUrl" name="imageUrl">
             </div>
-            <button type="submit" id="submitButton">イベントを登録</button>
+
+            <button type="submit" class="submit-button">イベントを登録</button>
         </form>
-        <div id="message"></div>
+
     </div>
 
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-        import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    <script>
+        document.getElementById('addEventForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // 実際にはここでFormDataを使ってFirestoreなどにデータを送信する処理を記述します。
+            const formData = {
+                title: document.getElementById('eventTitle').value,
+                date: document.getElementById('eventDate').value,
+                location: document.getElementById('eventLocation').value,
+                description: document.getElementById('eventDescription').value,
+                imageUrl: document.getElementById('eventImageUrl').value
+            };
 
-        // --- あなたのFirebaseプロジェクト設定 ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyBH8EPKOwIBIMR16Z7PTECc2Lp0Y5cfkHQ",
-            authDomain: "november5th-a1336.firebaseapp.com",
-            projectId: "november5th-a1336",
-            storageBucket: "november5th-a1336.firebasestorage.app",
-            messagingSenderId: "11537951889",
-            appId: "1:11537951889:web:d783b2298fc90f88a3a330"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        const form = document.getElementById('add-event-form');
-        const messageDiv = document.getElementById('message');
-        const submitButton = document.getElementById('submitButton');
-
-        async function addEvent(e) {
-            e.preventDefault(); 
-            submitButton.disabled = true;
-            messageDiv.style.display = 'none';
-
-            try {
-                const title = document.getElementById('title').value;
-                const dateString = document.getElementById('date').value;
-                const location = document.getElementById('location').value;
-                const description = document.getElementById('description').value;
-                const imageUrl = document.getElementById('imageUrl').value;
-                
-                // Dateオブジェクトに変換してTimestamp型として保存
-                const eventDate = new Date(dateString);
-
-                if (isNaN(eventDate)) {
-                     throw new Error("日付の形式が不正です。");
-                }
-
-                const newEventData = {
-                    title: title,
-                    date: eventDate, 
-                    location: location,
-                    description: description,
-                    imageUrl: imageUrl,
-                    createdAt: serverTimestamp() 
-                };
-
-                const docRef = await addDoc(collection(db, "events"), newEventData);
-
-                showMessage(`イベントが正常に追加されました！ (ID: ${docRef.id})`, 'success');
-                form.reset(); 
-                
-            } catch (error) {
-                console.error("イベントの追加中にエラーが発生しました:", error);
-                showMessage(`エラーが発生しました: ${error.message}`, 'error');
-            } finally {
-                submitButton.disabled = false;
-            }
-        }
-        
-        function showMessage(text, type) {
-            messageDiv.textContent = text;
-            messageDiv.className = ''; 
-            messageDiv.classList.add(type); 
-            messageDiv.style.display = 'block';
-        }
-
-        form.addEventListener('submit', addEvent);
+            console.log('送信データ:', formData);
+            // 例: alert('イベント ' + formData.title + ' を登録しました！');
+            
+            // 登録後の画面遷移やフォームクリア処理などを追加
+        });
     </script>
 </body>
 </html>
