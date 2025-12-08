@@ -1,234 +1,1101 @@
 <!DOCTYPE html>
+
 <html lang="ja">
+
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>管理者: イベント追加 - My Firestore App</title>
-    
+
+    <title>イベントリスト - My Firestore App</title>
+
     <style>
-        /* ---------------------------------------------------- */
-        /* メインページ (イベントリスト) のスタイルを流用 */
-        /* ---------------------------------------------------- */
+
+        /* 既存のスタイリング */
+
         body {
+
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
             margin: 0;
+
             padding: 20px;
+
             background-color: #f4f7f6;
+
             color: #333;
+
             line-height: 1.6;
+
         }
+
         .container {
-            max-width: 600px; /* フォーム用に幅を狭く調整 */
+
+            max-width: 900px;
+
             margin: 20px auto;
+
             background-color: #ffffff;
+
             padding: 30px;
+
             border-radius: 10px;
+
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+
         }
+
         h1 {
+
             color: #00A3A0; /* ティファニーブルー系 */
+
             text-align: center;
+
             margin-bottom: 20px;
+
             font-weight: 600;
+
         }
-        /* フォームグループのスタイル */
-        .form-group {
+
+        /* 認証UIのスタイル */
+
+        #auth-ui {
+
+            text-align: right;
+
             margin-bottom: 20px;
+
+            padding-bottom: 10px;
+
+            border-bottom: 1px solid #eee;
+
         }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 600; /* 太字 */
-            color: #333;
-        }
-        /* 入力フィールド全体のスタイル */
-        .form-group input[type="text"],
-        .form-group input[type="date"],
-        .form-group textarea {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            box-sizing: border-box; 
-            font-size: 1em;
-            transition: border-color 0.2s;
-        }
-        .form-group input[type="text"]:focus,
-        .form-group input[type="date"]:focus,
-        .form-group textarea:focus {
-            border-color: #00A3A0; /* フォーカス時に色を変更 */
-            outline: none;
-        }
-        .form-group textarea {
-            resize: vertical;
-            min-height: 100px; 
-        }
-        /* 登録ボタンのスタイル */
-        #register-button {
-            width: 100%;
-            padding: 15px;
-            background-color: #0ABAB5; /* メインカラーを使用 */
-            color: white;
+
+        #login-button, #logout-button, #mypage-button, #all-events-button {
+
+            padding: 8px 15px;
+
+            margin-left: 10px;
+
             border: none;
+
             border-radius: 5px;
+
             cursor: pointer;
-            font-size: 1.1em;
-            font-weight: bold;
+
+            font-size: 0.9em;
+
             transition: background-color 0.2s;
+
         }
-        #register-button:hover {
+
+        #login-button {
+
+            background-color: #0ABAB5; 
+
+            color: white;
+
+        }
+
+        #login-button:hover {
+
+            background-color: #00A3A0;
+
+        }
+
+        #logout-button {
+
+            background-color: #fbbc05;
+
+            color: #333;
+
+        }
+
+        #logout-button:hover {
+
+            background-color: #e0ac03;
+
+        }
+
+        /* マイページ/全イベントボタンのスタイル */
+
+        #mypage-button, #all-events-button {
+
+            background-color: #00A3A0;
+
+            color: white;
+
+            font-weight: bold;
+
+        }
+
+        #mypage-button:hover, #all-events-button:hover {
+
             background-color: #008f8c;
+
         }
-        /* メッセージ表示用のスタイル */
-        #message {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 5px;
-            text-align: center;
+
+        .view-active {
+
+             background-color: #0ABAB5 !important;
+
+             box-shadow: 0 0 0 2px #E0FFFF;
+
         }
-        .success {
-            background-color: #d4edda;
-            color: #155724;
-        }
-        .error {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>イベント新規追加</h1>
 
-        <form id="addEventForm">
-            
-            <div class="form-group">
-                <label for="eventTitle">イベントタイトル (title):</label>
-                <input type="text" id="eventTitle" name="title" required>
-            </div>
-
-            <div class="form-group">
-                <label for="eventDate">開催日 (date):</label>
-                <input type="date" id="eventDate" name="date" required>
-            </div>
-
-            <div class="form-group">
-                <label for="eventLocation">開催場所 (location):</label>
-                <input type="text" id="eventLocation" name="location" required>
-            </div>
-
-            <div class="form-group">
-                <label for="eventDescription">詳細説明 (description):</label>
-                <textarea id="eventDescription" name="description" required></textarea>
-            </div>
-
-            <div class="form-group">
-                <label for="eventImageUrl">画像URL (imageUrl):</label>
-                <input type="text" id="eventImageUrl" name="imageUrl">
-            </div>
-            
-            <div class="form-group">
-                <label for="eventTags">タグ (tags):</label>
-                <input type="text" id="eventTags" name="tags" placeholder="カンマ区切りで入力してください (例: AI, 東京, 懇親会)">
-            </div>
-
-
-            <button type="submit" id="register-button">イベントを登録</button>
-        </form>
         
-        <div id="message"></div>
+
+        /* 検索フォームのスタイル (省略) */
+
+        #search-controls { display: flex; gap: 10px; margin-bottom: 15px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9; }
+
+        #search-input { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 1em; }
+
+        #search-button, #clear-button { padding: 10px 15px; color: white; border: none; border-radius: 5px; font-size: 1em; cursor: pointer; transition: background-color 0.2s ease; }
+
+        #search-button { background-color: #00A3A0; }
+
+        #search-button:hover { background-color: #008f8c; }
+
+        #clear-button { background-color: #fbbc05; white-space: nowrap; }
+
+        #clear-button:hover { background-color: #e0ac03; }
+
+        
+
+        /* タグボタンのスタイル (省略) */
+
+        #tag-list { padding: 10px 0 25px 0; margin-bottom: 20px; border-bottom: 1px solid #eee; }
+
+        .tag-button { background-color: #e0e0e0; color: #333; border: 1px solid #ccc; padding: 6px 12px; margin-right: 8px; margin-bottom: 8px; border-radius: 18px; font-size: 0.9em; cursor: pointer; transition: background-color 0.2s, color 0.2s, border-color 0.2s; display: inline-block; }
+
+        .tag-button:hover { background-color: #d0d0d0; }
+
+        .tag-button.active { background-color: #0ABAB5; color: white; border-color: #0ABAB5; font-weight: bold; }
+
+
+        /* イベントカードのスタイル */
+
+        #events-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; }
+
+        .event-card {
+
+            background-color: #E0FFFF; 
+
+            border-radius: 8px;
+
+            padding: 20px;
+
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+            transition: transform 0.2s ease-in-out;
+
+            position: relative; 
+
+        }
+
+        .event-card:hover { transform: translateY(-5px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); }
+
+        .event-card .event-image { max-width: 100%; height: auto; border-radius: 5px; margin-bottom: 15px; display: block; }
+
+        .event-card h2 { color: #0ABAB5; margin-top: 0; font-size: 1.5em; margin-bottom: 10px; }
+
+        .event-card p { margin-bottom: 8px; font-size: 0.95em; }
+
+        .event-card .date { font-weight: bold; color: #34a853; } 
+
+        .event-card .location { color: #ea4335; } 
+
+        .event-tags { margin-top: 10px; font-size: 0.85em; color: #757575; }
+
+        .event-tag { display: inline-block; background-color: #cccccc; color: #333; padding: 3px 8px; margin-right: 5px; margin-bottom: 5px; border-radius: 4px; }
+
+
+        /* お気に入りボタンのスタイル */
+
+        .favorite-button {
+
+            position: absolute;
+
+            top: 10px;
+
+            right: 10px;
+
+            font-size: 24px;
+
+            cursor: pointer;
+
+            z-index: 10;
+
+            user-select: none;
+
+            transition: transform 0.1s;
+
+        }
+
+        .favorite-button:hover { transform: scale(1.1); }
+
+        .favorite-button.empty { color: #a0a0a0; }
+
+        .favorite-button.filled { color: #ff4d4d; } 
+
+        
+
+        .loading-message, .error-message { text-align: center; font-size: 1.1em; margin-top: 20px; padding: 15px; border-radius: 5px; }
+
+        .loading-message { background-color: #fff3cd; color: #856404; }
+
+        .error-message { background-color: #f8d7da; color: #721c24; }
+
+        #loadEventsButton { display: none; }
+
+    </style>
+
+</head>
+
+<body>
+
+    <div class="container">
+
+        <div id="auth-ui">
+
+            <button id="all-events-button" class="view-active">イベント一覧</button>
+
+            <button id="mypage-button">お気に入り</button>
+
+            
+
+            <span id="user-status">ログインしていません。</span>
+
+            <button id="login-button">Googleでログイン</button>
+
+            <button id="logout-button" style="display:none;">ログアウト</button>
+
+        </div>
+
+        
+
+        <h1 id="main-title">イベントリスト</h1> <div id="search-controls">
+
+            <input type="text" id="search-input" placeholder="キーワードを入力して絞り込み (例: 東京, AI)">
+
+            <button id="search-button">検索</button>
+
+            <button id="clear-button" title="検索条件をクリアして全件表示">クリア</button>
+
+        </div>
+
+
+        <div id="tag-list">
+
+            </div>
+
+        
+
+        <div id="events-list">
+
+            <p class="loading-message" id="initial-message">イベント情報をロード中...</p>
+
+        </div>
+
     </div>
 
+
     <script type="module">
+
         // Firebase SDKの各モジュールをインポートします
+
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-        import { 
-            getFirestore, 
-            collection, 
-            addDoc, // イベント新規追加にはaddDocを使用
-            serverTimestamp // タイムスタンプ
+
+        import { 
+
+            getFirestore, 
+
+            collection, 
+
+            getDocs, 
+
+            orderBy, 
+
+            query, 
+
+            where, 
+
+            doc, 
+
+            setDoc, 
+
+            deleteDoc,
+
+            serverTimestamp 
+
         } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
-        // --- メインページから取得したFirebaseプロジェクト設定 ---
+        import { 
+
+            getAuth, 
+
+            signInWithPopup, 
+
+            GoogleAuthProvider, 
+
+            onAuthStateChanged,
+
+            signOut 
+
+        } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+
+
+
+        // --- あなたのFirebaseプロジェクト設定 ---
+
         const firebaseConfig = {
+
             apiKey: "AIzaSyBH8EPKOwIBIMR16Z7PTECc2Lp0Y5cfkHQ",
+
             authDomain: "november5th-a1336.firebaseapp.com",
+
             projectId: "november5th-a1336",
+
             storageBucket: "november5th-a1336.firebasestorage.app",
+
             messagingSenderId: "11537951889",
+
             appId: "1:11537951889:web:d783b2298fc90f88a3a330"
+
         };
 
+
         const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app); 
 
-        // DOM要素への参照
-        const addEventForm = document.getElementById('addEventForm');
-        const messageDiv = document.getElementById('message');
-        const eventsCollectionRef = collection(db, "events");
+        const db = getFirestore(app);
 
-        /**
-         * メッセージを表示する関数
-         * @param {string} text - 表示するメッセージ
-         * @param {boolean} isSuccess - 成功メッセージかどうか
-         */
-        function displayMessage(text, isSuccess) {
-            messageDiv.textContent = text;
-            messageDiv.className = isSuccess ? 'success' : 'error';
-            // 3秒後にメッセージを消す
-            setTimeout(() => {
-                messageDiv.textContent = '';
-                messageDiv.className = '';
-            }, 3000);
-        }
+        const auth = getAuth(app); 
 
-        // --- フォーム送信イベントリスナー ---
-        addEventForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const title = document.getElementById('eventTitle').value;
-            const dateStr = document.getElementById('eventDate').value;
-            const location = document.getElementById('eventLocation').value;
-            const description = document.getElementById('eventDescription').value;
-            const imageUrl = document.getElementById('eventImageUrl').value;
-            const tagsStr = document.getElementById('eventTags').value;
-            
-            // タグをカンマで分割し、空白を除去した配列にする
-            const tagsArray = tagsStr.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
 
-            // 日付文字列をJavaScriptのDateオブジェクトに変換
-            const eventDate = new Date(dateStr);
-            
-            if (isNaN(eventDate)) {
-                displayMessage("日付の入力形式が正しくありません。", false);
-                return;
-            }
+        // DOM要素への参照を取得
 
-            const newEventData = {
-                title: title,
-                // FirestoreにDateオブジェクトとして保存（メインページのフィルタリングに必要）
-                date: eventDate, 
-                location: location,
-                description: description,
-                imageUrl: imageUrl,
-                tags: tagsArray, // 配列として保存
-                createdAt: serverTimestamp() 
-            };
+        const eventsListContainer = document.getElementById('events-list');
+
+        const searchInput = document.getElementById('search-input');
+
+        const searchButton = document.getElementById('search-button');
+
+        const clearButton = document.getElementById('clear-button');
+
+        const tagListContainer = document.getElementById('tag-list');
+
+        const mainTitle = document.getElementById('main-title'); 
+
+
+        const loginButton = document.getElementById('login-button');
+
+        const logoutButton = document.getElementById('logout-button');
+
+        const userStatus = document.getElementById('user-status');
+
+        const mypageButton = document.getElementById('mypage-button');
+
+        const allEventsButton = document.getElementById('all-events-button');
+
+
+
+        // グローバルな状態管理変数
+
+        let allEventsCache = []; 
+
+        let currentActiveTag = ''; 
+
+        let favoriteEventIds = new Set(); 
+
+        let currentView = 'all'; 
+
+
+        // --- 認証機能の関数 ---
+
+        async function loginWithGoogle() {
+
+            const provider = new GoogleAuthProvider();
 
             try {
-                // Firestoreの 'events' コレクションに新しいドキュメントを追加
-                await addDoc(eventsCollectionRef, newEventData);
-                
-                displayMessage("🎉 イベントが正常に登録されました。", true);
-                
-                // フォームをリセット
-                addEventForm.reset();
-                
+
+                await signInWithPopup(auth, provider);
+
             } catch (error) {
-                console.error("イベントの登録中にエラーが発生しました:", error);
-                displayMessage("イベント登録に失敗しました。エラー: " + error.message, false);
+
+                console.error("Googleログインエラー:", error.message);
+
+                alert("ログインに失敗しました: " + error.message);
+
             }
+
+        }
+
+
+        async function signOutUser() {
+
+            try {
+
+                await signOut(auth);
+
+                favoriteEventIds = new Set();
+
+                currentView = 'all';
+
+            } catch (error) {
+
+                console.error("ログアウトエラー:", error.message);
+
+                alert("ログアウトに失敗しました: " + error.message);
+
+            }
+
+        }
+
+        
+
+        async function fetchFavoriteIds() {
+
+            const userId = auth.currentUser ? auth.currentUser.uid : null;
+
+            if (!userId) {
+
+                favoriteEventIds = new Set();
+
+                return;
+
+            }
+
+
+            try {
+
+                const favoritesColRef = collection(db, "favorites");
+
+                const q = query(favoritesColRef, where("userId", "==", userId));
+
+                const snapshot = await getDocs(q);
+
+                
+
+                favoriteEventIds = new Set(snapshot.docs.map(doc => doc.data().eventId));
+
+            } catch (error) {
+
+                 console.error("お気に入りIDの取得中にエラーが発生しました:", error);
+
+                 favoriteEventIds = new Set();
+
+            }
+
+        }
+
+        
+
+        async function toggleFavorite(eventId) {
+
+            const user = auth.currentUser;
+
+            if (!user) {
+
+                alert("お気に入りに登録するにはログインが必要です。");
+
+                return;
+
+            }
+
+            const userId = user.uid;
+
+            
+
+            const docId = `${userId}_${eventId}`;
+
+            const docRef = doc(db, "favorites", docId); 
+
+            
+
+            const isCurrentlyFavorite = favoriteEventIds.has(eventId);
+
+            
+
+            try {
+
+                if (isCurrentlyFavorite) {
+
+                    await deleteDoc(docRef);
+
+                    favoriteEventIds.delete(eventId);
+
+                } else {
+
+                    await setDoc(docRef, {
+
+                        userId: userId,
+
+                        eventId: eventId,
+
+                        createdAt: serverTimestamp() 
+
+                    });
+
+                    favoriteEventIds.add(eventId);
+
+                }
+
+                
+
+                loadEvents(searchInput.value, currentActiveTag);
+
+            } catch (error) {
+
+                console.error("お気に入り登録中にエラー:", error);
+
+                alert("お気に入り操作に失敗しました。Firestoreのルールを確認してください。");
+
+            }
+
+        }
+
+
+        // --- Firestoreデータ取得・表示関数 ---
+
+        async function fetchAllEvents() {
+
+            if (allEventsCache.length > 0) { return allEventsCache; }
+
+
+            try {
+
+                const eventsCollectionRef = collection(db, "events");
+
+                const q = query(eventsCollectionRef, orderBy("date", "asc"));
+
+                const querySnapshot = await getDocs(q);
+
+                
+
+                let eventsData = [];
+
+                let uniqueTags = new Set(); 
+
+
+                querySnapshot.forEach((doc) => {
+
+                    const eventData = doc.data();
+
+                    eventData.id = doc.id; 
+
+                    eventsData.push(eventData);
+
+
+                    const tagsArray = Array.isArray(eventData.tags) ? eventData.tags : (typeof eventData.tags === 'string' ? eventData.tags.split(',') : []);
+
+                    tagsArray.forEach(tag => {
+
+                        const t = tag.trim();
+
+                        if (t) uniqueTags.add(t);
+
+                    });
+
+                });
+
+
+                allEventsCache = eventsData;
+
+                createTagButtons(Array.from(uniqueTags)); 
+
+                
+
+                return eventsData;
+
+            } catch (error) {
+
+                console.error("イベントの取得中にエラーが発生しました:", error);
+
+                eventsListContainer.innerHTML = `<p class="error-message">イベントのロードに失敗しました。<br>エラー: ${error.message}</p>`;
+
+                return [];
+
+            }
+
+        }
+
+
+        function createTagButtons(tags) {
+
+            tagListContainer.innerHTML = '';
+
+            
+
+            const allButton = document.createElement('button');
+
+            allButton.textContent = "全て";
+
+            allButton.className = 'tag-button';
+
+            allButton.addEventListener('click', () => handleTagClick(""));
+
+            tagListContainer.appendChild(allButton);
+
+
+            tags.sort().forEach(tag => {
+
+                const button = document.createElement('button');
+
+                button.textContent = tag;
+
+                button.className = 'tag-button';
+
+                button.setAttribute('data-tag', tag);
+
+                button.addEventListener('click', () => handleTagClick(tag));
+
+                tagListContainer.appendChild(button);
+
+            });
+
+            updateTagButtonsUI(currentActiveTag);
+
+        }
+
+        
+
+        function handleTagClick(tag) {
+
+            searchInput.value = '';
+
+            
+
+            const newTag = (currentActiveTag === tag) ? "" : tag;
+
+            currentActiveTag = newTag; 
+
+            
+
+            updateTagButtonsUI(newTag);
+
+            loadEvents(searchInput.value, newTag);
+
+        }
+
+
+        function updateTagButtonsUI(activeTag) {
+
+            document.querySelectorAll('.tag-button').forEach(button => {
+
+                button.classList.remove('active');
+
+                if (button.getAttribute('data-tag') === activeTag || (!activeTag && button.textContent === "全て")) {
+
+                    button.classList.add('active');
+
+                }
+
+            });
+
+        }
+
+        
+
+        function updateViewButtonsUI() {
+
+            allEventsButton.classList.remove('view-active');
+
+            mypageButton.classList.remove('view-active');
+
+            
+
+            if (currentView === 'all') {
+
+                allEventsButton.classList.add('view-active');
+
+                mainTitle.textContent = "イベントリスト"; 
+
+                tagListContainer.style.display = 'block'; 
+
+                searchButton.style.display = 'inline-block';
+
+                clearButton.style.display = 'inline-block';
+
+            } else {
+
+                mypageButton.classList.add('view-active');
+
+                mainTitle.textContent = "お気に入り"; 
+
+                tagListContainer.style.display = 'none'; 
+
+                searchButton.style.display = 'none';
+
+                clearButton.style.display = 'none';
+
+            }
+
+            
+
+            const isUserLoggedIn = auth.currentUser !== null;
+
+            mypageButton.style.display = isUserLoggedIn ? 'inline-block' : 'none';
+
+            allEventsButton.style.display = isUserLoggedIn ? 'inline-block' : 'none';
+
+        }
+
+
+
+        async function loadEvents(keyword = searchInput.value, selectedTag = currentActiveTag) {
+
+            const lowerCaseKeyword = keyword.trim().toLowerCase();
+
+            const trimSelectedTag = selectedTag.trim();
+
+
+            updateViewButtonsUI();
+
+            eventsListContainer.innerHTML = '<p class="loading-message">イベント情報をロード中...</p>';
+
+            searchButton.disabled = true;
+
+            clearButton.disabled = true;
+
+            document.querySelectorAll('.tag-button').forEach(b => b.disabled = true);
+
+
+            const eventsData = await fetchAllEvents();
+
+            if (eventsData.length === 0) {
+
+                 searchButton.disabled = false;
+
+                 clearButton.disabled = false;
+
+                 document.querySelectorAll('.tag-button').forEach(b => b.disabled = false);
+
+                 return;
+
+            }
+
+
+            // 1. 複合フィルタリング
+
+            const now = new Date();
+
+            now.setHours(0, 0, 0, 0); 
+
+            
+
+            let filteredEvents = eventsData.filter(event => {
+
+                
+
+                // マイページフィルタリング
+
+                if (currentView === 'favorites' && !favoriteEventIds.has(event.id)) {
+
+                    return false;
+
+                }
+
+                
+
+                // 過去の日付を非表示
+
+                const eventDateObj = event.date ? (event.date.toDate ? event.date.toDate() : new Date(event.date)) : null;
+
+                if (!eventDateObj || eventDateObj < now) { return false; }
+
+                
+
+                // タグフィルタリング（全イベントビューでのみ適用）
+
+                if (currentView === 'all' && trimSelectedTag) {
+
+                    const eventTags = Array.isArray(event.tags) ? event.tags : (typeof event.tags === 'string' ? event.tags.split(',').map(t => t.trim()) : []);
+
+                    if (!eventTags.includes(trimSelectedTag)) { return false; }
+
+                }
+
+                
+
+                // キーワードフィルタリング
+
+                if (lowerCaseKeyword) {
+
+                    const title = (event.title || '').toLowerCase();
+
+                    const description = (event.description || '').toLowerCase();
+
+                    const location = (event.location || '').toLowerCase();
+
+                    const tags = Array.isArray(event.tags) ? event.tags.join(' ').toLowerCase() : (event.tags || '').toLowerCase();
+
+
+                    if (!(title.includes(lowerCaseKeyword) ||
+
+                           description.includes(lowerCaseKeyword) ||
+
+                           location.includes(lowerCaseKeyword) ||
+
+                           tags.includes(lowerCaseKeyword))) { return false; }
+
+                }
+
+                return true;
+
+            });
+
+
+            // 2. HTML描画
+
+            eventsListContainer.innerHTML = ''; 
+
+
+            if (filteredEvents.length === 0) {
+
+                let message = currentView === 'favorites' 
+
+                    ? `お気に入りのイベントはまだ登録されていません。`
+
+                    : `検索条件に一致するイベントは見つかりませんでした。`;
+
+                eventsListContainer.innerHTML = `<p class="loading-message">${message}</p>`;
+
+            } else {
+
+                filteredEvents.forEach((eventData) => {
+
+                    const eventCard = document.createElement('div');
+
+                    eventCard.className = 'event-card';
+
+
+                    const title = eventData.title || 'タイトルなし';
+
+                    const date = eventData.date ? (eventData.date.toDate ? eventData.date.toDate().toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' }) : eventData.date) : '日付未定';
+
+                    const description = eventData.description || '説明なし';
+
+                    const location = eventData.location || '場所未定';
+
+                    const imageUrl = eventData.imageUrl || ''; 
+
+                    const eventId = eventData.id; 
+
+                    
+
+                    const isFavorite = favoriteEventIds.has(eventId);
+
+                    const heartIconClass = isFavorite ? 'filled' : 'empty';
+
+                    const heartIcon = isFavorite ? '❤️' : '🤍'; 
+
+                    
+
+                    let tagsHtml = '';
+
+                    const tagsArray = Array.isArray(eventData.tags) ? eventData.tags : (typeof eventData.tags === 'string' ? eventData.tags.split(',').map(t => t.trim()) : []);
+
+                    if (tagsArray.length > 0) {
+
+                        const tagSpans = tagsArray.map(tag => 
+
+                            `<span class="event-tag">${tag.trim()}</span>`
+
+                        ).join('');
+
+                        tagsHtml = `<div class="event-tags">${tagSpans}</div>`;
+
+                    }
+
+
+                    eventCard.innerHTML = `
+
+                        ${auth.currentUser ? `<span class="favorite-button ${heartIconClass}" data-event-id="${eventId}">${heartIcon}</span>` : ''}
+
+                        ${imageUrl ? `<img src="${imageUrl}" alt="${title}" class="event-image">` : ''}
+
+                        <h2>${title}</h2>
+
+                        <p class="date">日付: ${date}</p>
+
+                        <p><strong>場所:</strong> ${location}</p>
+
+                        <p>${description}</p>
+
+                        ${tagsHtml}
+
+                    `;
+
+                    eventsListContainer.appendChild(eventCard);
+
+                    
+
+                    // ★★★ イベントリスナーの確実な設定 ★★★
+
+                    if (auth.currentUser) {
+
+                        const favButton = eventCard.querySelector('.favorite-button');
+
+                        if (favButton) {
+
+                            favButton.addEventListener('click', (e) => {
+
+                                e.stopPropagation(); 
+
+                                toggleFavorite(eventId);
+
+                            });
+
+                        }
+
+                    }
+
+                });
+
+            }
+
+
+            searchButton.disabled = false;
+
+            clearButton.disabled = false;
+
+            document.querySelectorAll('.tag-button').forEach(b => b.disabled = false);
+
+        }
+
+
+        // --- イベントリスナーの設定 ---
+
+        loginButton.addEventListener('click', loginWithGoogle);
+
+        logoutButton.addEventListener('click', signOutUser);
+
+
+        // ビュー切り替えリスナー
+
+        mypageButton.addEventListener('click', () => {
+
+            currentView = 'favorites';
+
+            currentActiveTag = '';
+
+            searchInput.value = '';
+
+            updateTagButtonsUI('');
+
+            loadEvents();
+
         });
+
+
+        allEventsButton.addEventListener('click', () => {
+
+            currentView = 'all';
+
+            currentActiveTag = '';
+
+            searchInput.value = '';
+
+            updateTagButtonsUI('');
+
+            loadEvents();
+
+        });
+
+
+        searchButton.addEventListener('click', () => {
+
+            currentView = 'all'; 
+
+            currentActiveTag = "";
+
+            updateTagButtonsUI("");
+
+            loadEvents(searchInput.value, "");
+
+        });
+
+
+        clearButton.addEventListener('click', () => {
+
+            searchInput.value = '';
+
+            currentActiveTag = "";
+
+            updateTagButtonsUI("");
+
+            loadEvents('', "");
+
+        });
+
+
+        searchInput.addEventListener('keypress', (e) => {
+
+            if (e.key === 'Enter') {
+
+                e.preventDefault();
+
+                searchButton.click();
+
+            }
+
+        });
+
+        
+
+        onAuthStateChanged(auth, async (user) => {
+
+            const isUserLoggedIn = user !== null;
+
+            
+
+            if (user) {
+
+                userStatus.textContent = `ログイン中: ${user.displayName || user.email}`;
+
+                loginButton.style.display = 'none';
+
+                logoutButton.style.display = 'inline-block';
+
+                
+
+                await fetchFavoriteIds();
+
+            } else {
+
+                userStatus.textContent = 'ログインしていません。';
+
+                loginButton.style.display = 'inline-block';
+
+                logoutButton.style.display = 'none';
+
+            }
+
+            
+
+            updateViewButtonsUI();
+
+
+            if (allEventsCache.length === 0 || isUserLoggedIn) {
+
+                 fetchAllEvents().then(() => {
+
+                     loadEvents(); 
+
+                 });
+
+            } else {
+
+                 loadEvents();
+
+            }
+
+        });
+
     </script>
+
 </body>
+
 </html>
