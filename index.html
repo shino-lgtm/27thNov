@@ -9,11 +9,14 @@
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
-            padding: 20px;
+            padding: 20px; /* PCでのパディング */
             background-color: #f4f7f6;
             color: #333;
             line-height: 1.6;
         }
+
+        /* ★固定ヘッダーのためのパディング設定★ */
+        /* PC画面では固定しないため、大きなパディングは不要だが、スマホ対応のため残す */
         .container {
             max-width: 900px;
             margin: 20px auto;
@@ -22,6 +25,18 @@
             border-radius: 10px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
+
+        /* ★ヘッダー固定のスタイル設定 (新規追加)★ */
+        #fixed-header {
+            /* スクロール追従（画面上端に到達すると固定される） */
+            position: sticky; 
+            top: 0;
+            z-index: 1000; /* 他の要素より手前に表示 */
+            background-color: #ffffff; /* 背景色を設定しないと透過してしまう */
+            padding-bottom: 5px; 
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
         h1 {
             color: #00A3A0;
             text-align: center;
@@ -87,7 +102,7 @@
         .tag-button:hover { background-color: #d0d0d0; }
         .tag-button.active { background-color: #0ABAB5; color: white; border-color: #0ABAB5; font-weight: bold; }
 
-        /* イベントカードのスタイル */
+        /* イベントカードのスタイル (省略) */
         #events-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; }
         .event-card {
             background-color: #E0FFFF;
@@ -106,7 +121,7 @@
         .event-tags { margin-top: 10px; font-size: 0.85em; color: #757575; }
         .event-tag { display: inline-block; background-color: #cccccc; color: #333; padding: 3px 8px; margin-right: 5px; margin-bottom: 5px; border-radius: 4px; }
 
-        /* お気に入りボタンのスタイル */
+        /* お気に入りボタンのスタイル (省略) */
         .favorite-button {
             position: absolute;
             top: 10px;
@@ -127,12 +142,13 @@
         #loadEventsButton { display: none; }
 
 
-        /* --- ★ 携帯端末 (幅600px以下) 用の最適化スタイル ★ --- */
+        /* --- ★ 携帯端末 (幅600px以下) 用の最適化スタイル (レスポンシブ対応) ★ --- */
         @media (max-width: 600px) {
-            /* コンテナの横幅を広げる（スマホで両端の余白を減らす） */
+            /* 携帯では画面幅いっぱいにコンテンツを使うため、ボディのパディングを減らす */
             body {
-                padding: 10px; /* 全体のパディングを減らす */
+                padding: 10px;
             }
+            /* コンテナは画面いっぱいに広げる */
             .container {
                 margin: 0;
                 padding: 15px;
@@ -141,18 +157,18 @@
 
             /* イベントカードを縦一列表示にする */
             #events-list {
-                grid-template-columns: 1fr; /* 1列にする */
+                grid-template-columns: 1fr;
                 gap: 15px;
             }
 
             /* 検索フォームの調整（ボタンなどを縦に並べて押しやすくする） */
             #search-controls {
-                flex-direction: column; /* 要素を縦に並べる */
+                flex-direction: column;
                 gap: 8px;
                 padding: 10px;
             }
             #search-button, #clear-button {
-                width: 100%; /* ボタンを全幅にする */
+                width: 100%;
                 box-sizing: border-box;
             }
             
@@ -170,24 +186,27 @@
 </head>
 <body>
     <div class="container">
-        <div id="auth-ui">
-            <button id="all-events-button" class="view-active">イベント一覧</button>
-            <button id="mypage-button">お気に入り</button>
+        
+        <div id="fixed-header">
+            <div id="auth-ui">
+                <button id="all-events-button" class="view-active">イベント一覧</button>
+                <button id="mypage-button">お気に入り</button>
+                
+                <span id="user-status">ログインしていません。</span>
+                <button id="login-button">Googleでログイン</button>
+                <button id="logout-button" style="display:none;">ログアウト</button>
+            </div>
             
-            <span id="user-status">ログインしていません。</span>
-            <button id="login-button">Googleでログイン</button>
-            <button id="logout-button" style="display:none;">ログアウト</button>
-        </div>
-        
-        <h1 id="main-title">イベントリスト</h1> <div id="search-controls">
-            <input type="text" id="search-input" placeholder="キーワードを入力して絞り込み (例: 東京, AI)">
-            <button id="search-button">検索</button>
-            <button id="clear-button" title="検索条件をクリアして全件表示">クリア</button>
-        </div>
+            <h1 id="main-title">イベントリスト</h1> 
+            <div id="search-controls">
+                <input type="text" id="search-input" placeholder="キーワードを入力して絞り込み (例: 東京, AI)">
+                <button id="search-button">検索</button>
+                <button id="clear-button" title="検索条件をクリアして全件表示">クリア</button>
+            </div>
 
-        <div id="tag-list">
+            <div id="tag-list">
+            </div>
         </div>
-        
         <div id="events-list">
             <p class="loading-message" id="initial-message">イベント情報をロード中...</p>
         </div>
@@ -343,7 +362,7 @@
                     eventData.id = doc.id; 
                     eventsData.push(eventData);
 
-                    const tagsArray = Array.isArray(eventData.tags) ? eventData.tags : (typeof eventData.tags === 'string' ? eventData.tags.split(',') : []);
+                    const tagsArray = Array.isArray(eventData.tags) ? eventData.tags : (typeof eventData.tags === 'string' ? eventData.tags.split(',').map(t => t.trim()) : []);
                     tagsArray.forEach(tag => {
                         const t = tag.trim();
                         if (t) uniqueTags.add(t);
