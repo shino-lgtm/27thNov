@@ -9,14 +9,13 @@
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
-            padding: 20px; /* PCでのパディング */
+            padding: 20px;
             background-color: #f4f7f6;
             color: #333;
             line-height: 1.6;
         }
 
-        /* ★固定ヘッダーのためのパディング設定★ */
-        /* PC画面では固定しないため、大きなパディングは不要だが、スマホ対応のため残す */
+        /* コンテナ (PC用の枠) */
         .container {
             max-width: 900px;
             margin: 20px auto;
@@ -26,37 +25,40 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
 
-        /* ★ヘッダー固定のスタイル設定 (新規追加)★ */
+        /* ★固定ヘッダーのスタイル設定★ */
         #fixed-header {
-            /* スクロール追従（画面上端に到達すると固定される） */
-            position: sticky; 
+            position: sticky;
             top: 0;
-            z-index: 1000; /* 他の要素より手前に表示 */
-            background-color: #ffffff; /* 背景色を設定しないと透過してしまう */
-            padding-bottom: 5px; 
+            z-index: 1000;
+            background-color: #ffffff;
+            padding-bottom: 5px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         h1 {
             color: #00A3A0;
             text-align: center;
-            margin-bottom: 20px;
+            /* ★改良点1: タイトル上下の余白を減らす★ */
+            margin-top: 10px;
+            margin-bottom: 15px; 
             font-weight: 600;
         }
+        
         /* 認証UIのスタイル */
         #auth-ui {
             text-align: right;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
+            margin-bottom: 5px; /* ★改良点1: 余白を減らす★ */
+            padding-bottom: 5px; /* ★改良点1: 余白を減らす★ */
             border-bottom: 1px solid #eee;
         }
         #login-button, #logout-button, #mypage-button, #all-events-button {
-            padding: 8px 15px;
-            margin-left: 10px;
+            /* ★改良点2: ボタンのパディングを少し減らす★ */
+            padding: 6px 12px; 
+            margin-left: 8px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            font-size: 0.9em;
+            font-size: 0.85em; /* ★改良点2: フォントサイズも少し小さく★ */
             transition: background-color 0.2s;
         }
         #login-button {
@@ -88,17 +90,29 @@
         }
         
         /* 検索フォームのスタイル */
-        #search-controls { display: flex; gap: 10px; margin-bottom: 15px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9; }
-        #search-input { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 1em; }
-        #search-button, #clear-button { padding: 10px 15px; color: white; border: none; border-radius: 5px; font-size: 1em; cursor: pointer; transition: background-color 0.2s ease; }
+        /* ★改良点1: 余白を減らす★ */
+        #search-controls { display: flex; gap: 10px; margin-bottom: 10px; padding: 10px 15px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9; }
+        #search-input { flex-grow: 1; padding: 8px; border: 1px solid #ccc; border-radius: 5px; font-size: 1em; }
+        #search-button, #clear-button { padding: 8px 12px; color: white; border: none; border-radius: 5px; font-size: 1em; cursor: pointer; transition: background-color 0.2s ease; }
         #search-button { background-color: #00A3A0; }
         #search-button:hover { background-color: #008f8c; }
         #clear-button { background-color: #fbbc05; white-space: nowrap; }
         #clear-button:hover { background-color: #e0ac03; }
         
         /* タグボタンのスタイル */
-        #tag-list { padding: 10px 0 25px 0; margin-bottom: 20px; border-bottom: 1px solid #eee; }
-        .tag-button { background-color: #e0e0e0; color: #333; border: 1px solid #ccc; padding: 6px 12px; margin-right: 8px; margin-bottom: 8px; border-radius: 18px; font-size: 0.9em; cursor: pointer; transition: background-color 0.2s, color 0.2s, border-color 0.2s; display: inline-block; }
+        #tag-list { 
+            /* ★改良点1: 余白を減らす★ */
+            padding: 5px 0 15px 0; 
+            margin-bottom: 10px; 
+            border-bottom: 1px solid #eee; 
+            /* ★改良点3: スマホでタグが多い場合に対応 (常に横スクロール可能に) ★ */
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+        .tag-button { 
+            /* ★改良点2: ボタンのパディングを少し減らす★ */
+            background-color: #e0e0e0; color: #333; border: 1px solid #ccc; padding: 4px 10px; margin-right: 6px; margin-bottom: 6px; border-radius: 18px; font-size: 0.8em; cursor: pointer; transition: background-color 0.2s, color 0.2s, border-color 0.2s; display: inline-block; 
+        }
         .tag-button:hover { background-color: #d0d0d0; }
         .tag-button.active { background-color: #0ABAB5; color: white; border-color: #0ABAB5; font-weight: bold; }
 
@@ -144,15 +158,20 @@
 
         /* --- ★ 携帯端末 (幅600px以下) 用の最適化スタイル (レスポンシブ対応) ★ --- */
         @media (max-width: 600px) {
-            /* 携帯では画面幅いっぱいにコンテンツを使うため、ボディのパディングを減らす */
+            
             body {
-                padding: 10px;
+                padding: 5px; /* ★改良点1: 全体のパディングをさらに減らす★ */
             }
-            /* コンテナは画面いっぱいに広げる */
             .container {
                 margin: 0;
-                padding: 15px;
+                padding: 10px; /* ★改良点1: コンテナのパディングを減らす★ */
                 box-shadow: none;
+            }
+
+            /* ★改良点4: 固定ヘッダーの横のパディングを削る★ */
+            #fixed-header {
+                 /* bodyのパディングに合わせるため、ここでは左右のパディングを削除 */
+                 padding: 5px 0 0 0; 
             }
 
             /* イベントカードを縦一列表示にする */
@@ -165,7 +184,9 @@
             #search-controls {
                 flex-direction: column;
                 gap: 8px;
-                padding: 10px;
+                /* ★改良点1: 余白を減らす★ */
+                margin-bottom: 5px;
+                padding: 8px; 
             }
             #search-button, #clear-button {
                 width: 100%;
@@ -175,11 +196,12 @@
             /* 認証UIの調整（ボタンを中央寄せでまとめる） */
             #auth-ui {
                 text-align: center;
+                margin-bottom: 5px;
             }
             #auth-ui button, #auth-ui span {
-                margin: 5px 5px;
+                margin: 3px 3px; /* ★改良点1: 余白を減らす★ */
                 display: inline-block;
-                font-size: 1em;
+                font-size: 0.9em;
             }
         }
     </style>
