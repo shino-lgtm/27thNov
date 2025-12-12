@@ -25,54 +25,55 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
 
-        /* ★改良点1: 固定ヘッダーのスタイル設定★ */
+        /* ★埋め込みセクションのスタイル★ */
+        #instagram-section {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            text-align: center;
+        }
+        #instagram-section h2 {
+            color: #0ABAB5;
+            margin-bottom: 25px;
+            font-weight: 600;
+        }
+        /* 埋め込みコンテンツがコンテナ幅を超えないようにする */
+        #instagram-embed-content {
+            max-width: 100%; 
+            overflow: hidden;
+            display: inline-block; /* センタリングのため */
+        }
+
+        /* 固定ヘッダーのスタイル設定 */
         #fixed-header {
-            position: sticky; /* スクロールしても画面上部に固定 */
+            position: sticky; 
             top: 0;
             z-index: 1000;
             background-color: #ffffff;
             padding-bottom: 5px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            /* コンテナのパディングと合わせるため、幅を調整する場合はここも調整が必要 */
         }
 
         h1 {
-            color: #00A3A0;
+            color: #00A3A0; 
             text-align: center;
-            /* ★改良点: タイトル上下の余白を減らす★ */
             margin-top: 10px;
             margin-bottom: 15px; 
             font-weight: 600;
         }
         
-        /* 認証UIのスタイル */
-        #auth-ui {
-            text-align: right;
-            margin-bottom: 5px; /* ★改良点: 余白を減らす★ */
-            padding-bottom: 5px; /* ★改良点: 余白を減らす★ */
-            border-bottom: 1px solid #eee;
-        }
-        #login-button, #logout-button, #mypage-button, #all-events-button {
-            /* ★改良点: ボタンのパディングとフォントサイズを微調整★ */
-            padding: 6px 12px; 
-            margin-left: 8px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.85em; 
-            transition: background-color 0.2s;
-        }
+        /* 認証UIのスタイル (省略) */
+        #auth-ui { text-align: right; margin-bottom: 5px; padding-bottom: 5px; border-bottom: 1px solid #eee; }
+        #login-button, #logout-button, #mypage-button, #all-events-button { padding: 6px 12px; margin-left: 8px; border: none; border-radius: 5px; cursor: pointer; font-size: 0.85em; transition: background-color 0.2s; }
         #login-button { background-color: #0ABAB5; color: white; }
         #login-button:hover { background-color: #00A3A0; }
         #logout-button { background-color: #fbbc05; color: #333; }
         #logout-button:hover { background-color: #e0ac03; }
-        
-        /* マイページ/全イベントボタンのスタイル */
         #mypage-button, #all-events-button { background-color: #00A3A0; color: white; font-weight: bold; }
         #mypage-button:hover, #all-events-button:hover { background-color: #008f8c; }
         .view-active { background-color: #0ABAB5 !important; box-shadow: 0 0 0 2px #E0FFFF; }
         
-        /* 検索フォームのスタイル */
+        /* 検索フォームのスタイル (省略) */
         #search-controls { display: flex; gap: 10px; margin-bottom: 10px; padding: 10px 15px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9; }
         #search-input { flex-grow: 1; padding: 8px; border: 1px solid #ccc; border-radius: 5px; font-size: 1em; }
         #search-button, #clear-button { padding: 8px 12px; color: white; border: none; border-radius: 5px; font-size: 1em; cursor: pointer; transition: background-color 0.2s ease; }
@@ -81,20 +82,9 @@
         #clear-button { background-color: #fbbc05; white-space: nowrap; }
         #clear-button:hover { background-color: #e0ac03; }
         
-        /* タグボタンのスタイル */
-        #tag-list { 
-            /* ★改良点: 余白を減らす★ */
-            padding: 5px 0 15px 0; 
-            margin-bottom: 10px; 
-            border-bottom: 1px solid #eee; 
-            /* ★改良点: 横スクロール可能にする★ */
-            overflow-x: auto;
-            white-space: nowrap;
-        }
-        .tag-button { 
-            /* ★改良点: ボタンのパディングとフォントサイズを微調整★ */
-            background-color: #e0e0e0; color: #333; border: 1px solid #ccc; padding: 4px 10px; margin-right: 6px; margin-bottom: 6px; border-radius: 18px; font-size: 0.8em; cursor: pointer; transition: background-color 0.2s, color 0.2s, border-color 0.2s; display: inline-block; 
-        }
+        /* タグボタンのスタイル (省略) */
+        #tag-list { padding: 5px 0 15px 0; margin-bottom: 10px; border-bottom: 1px solid #eee; overflow-x: auto; white-space: nowrap; }
+        .tag-button { background-color: #e0e0e0; color: #333; border: 1px solid #ccc; padding: 4px 10px; margin-right: 6px; margin-bottom: 6px; border-radius: 18px; font-size: 0.8em; cursor: pointer; transition: background-color 0.2s, color 0.2s, border-color 0.2s; display: inline-block; }
         .tag-button:hover { background-color: #d0d0d0; }
         .tag-button.active { background-color: #0ABAB5; color: white; border-color: #0ABAB5; font-weight: bold; }
 
@@ -124,51 +114,14 @@
 
         /* --- 携帯端末 (幅600px以下) 用の最適化スタイル (レスポンシブ対応) --- */
         @media (max-width: 600px) {
-            
-            body {
-                padding: 5px; 
-            }
-            .container {
-                margin: 0;
-                padding: 10px; 
-                box-shadow: none;
-            }
-
-            /* ★改良点: 固定ヘッダーの横のパディングを削る★ */
-            #fixed-header {
-                 /* bodyのパディングに合わせるため、ここでは左右のパディングを削除 */
-                 padding: 5px 0 0 0; 
-            }
-            
-            /* イベントカードを縦一列表示にする */
-            #events-list {
-                grid-template-columns: 1fr;
-                gap: 15px;
-            }
-
-            /* 検索フォームの調整（ボタンなどを縦に並べて押しやすくする） */
-            #search-controls {
-                flex-direction: column;
-                gap: 8px;
-                /* ★改良点: 余白を減らす★ */
-                margin-bottom: 5px;
-                padding: 8px; 
-            }
-            #search-button, #clear-button {
-                width: 100%;
-                box-sizing: border-box;
-            }
-            
-            /* 認証UIの調整（ボタンを中央寄せでまとめる） */
-            #auth-ui {
-                text-align: center;
-                margin-bottom: 5px;
-            }
-            #auth-ui button, #auth-ui span {
-                margin: 3px 3px; /* ★改良点: 余白を減らす★ */
-                display: inline-block;
-                font-size: 0.9em;
-            }
+            body { padding: 5px; }
+            .container { margin: 0; padding: 10px; box-shadow: none; }
+            #fixed-header { padding: 5px 0 0 0; }
+            #events-list { grid-template-columns: 1fr; gap: 15px; }
+            #search-controls { flex-direction: column; gap: 8px; margin-bottom: 5px; padding: 8px; }
+            #search-button, #clear-button { width: 100%; box-sizing: border-box; }
+            #auth-ui { text-align: center; margin-bottom: 5px; }
+            #auth-ui button, #auth-ui span { margin: 3px 3px; display: inline-block; font-size: 0.9em; }
         }
     </style>
 </head>
@@ -195,12 +148,20 @@
             <div id="tag-list">
                 </div>
         </div>
+        
         <div id="events-list">
             <p class="loading-message" id="initial-message">イベント情報をロード中...</p>
         </div>
-    </div>
 
-    <script type="module">
+        <div id="instagram-section">
+            <h2>最新のInstagram投稿</h2>
+            <div id="instagram-embed-content">
+                <p>実際の埋め込みコードをここに貼り付けることで表示されます。</p>
+            </div>
+        </div>
+        </div>
+
+    <script async src="//www.instagram.com/embed.js"></script> <script type="module">
         // Firebase SDKの各モジュールをインポートします
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
         import { 
@@ -259,7 +220,7 @@
         let favoriteEventIds = new Set(); 
         let currentView = 'all'; 
 
-        // --- 認証機能の関数 ---
+        // --- 認証機能の関数 (省略) ---
         async function loginWithGoogle() {
             const provider = new GoogleAuthProvider();
             try {
@@ -333,7 +294,7 @@
             }
         }
 
-        // --- Firestoreデータ取得・表示関数 ---
+        // --- Firestoreデータ取得・表示関数 (省略) ---
         async function fetchAllEvents() {
             if (allEventsCache.length > 0) { return allEventsCache; }
 
