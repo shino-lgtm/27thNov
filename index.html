@@ -96,7 +96,7 @@
         .favorite-button.filled { color: #ff4d4d; } 
 
         /* -------------------------------------- */
-        /* 5. SociableKITセクションのスタイル */
+        /* 5. SociableKITセクションのスタイル (調整済み) */
         /* -------------------------------------- */
         #social-feed-section {
             margin-top: 40px;
@@ -105,19 +105,24 @@
             text-align: center;
         }
         #social-feed-section h2 {
-            /* タイトルをInstagramフィードに合わせて変更 */
             color: #0ABAB5;
             margin-bottom: 25px;
             font-weight: 600;
         }
+        /* ★フィードのサイズ調整をここで行います★ */
         #embed-widget-container {
-            max-width: 100%;
+            max-width: 100%; 
             overflow: hidden;
-            display: inline-block;
-            height: 500px; /* フィードの表示高さを設定（必要に応じて調整） */
-            width: 100%;
+            display: block; /* 中央揃えのためにblockに */
+            height: 600px; /* ★高さを増やして表示エリアを確保しました★ */
+            width: 100%; 
+            margin: 0 auto; /* 中央揃えを適用 */
         }
-        
+        /* SociableKITのウィジェット要素自体にも最大幅を設定 */
+        .sk-ww-instagram-hashtag-feed {
+            max-width: 100%;
+        }
+
         /* -------------------------------------- */
         /* 6. モバイル最適化 (600px以下) */
         /* -------------------------------------- */
@@ -130,7 +135,7 @@
             #search-button, #clear-button { width: 100%; box-sizing: border-box; }
             #auth-ui { text-align: center; margin-bottom: 5px; }
             #auth-ui button, #auth-ui span { margin: 3px 3px; display: inline-block; font-size: 0.9em; }
-            #embed-widget-container { height: 400px; }
+            #embed-widget-container { height: 400px; } /* モバイルでは高さを少し抑える */
         }
     </style>
 </head>
