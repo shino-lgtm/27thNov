@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>イベントリスト - My Firestore App</title>
     <style>
-        /* 既存のスタイリング (PC向け/共通) */
+        /* -------------------------------------- */
+        /* 1. 基本設定・共通スタイル (PC向け/共通) */
+        /* -------------------------------------- */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
@@ -25,33 +27,18 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
 
-        /* 埋め込みセクションのスタイル */
-        #instagram-section {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
+        /* メインタイトル */
+        h1 {
+            color: #00A3A0;
             text-align: center;
-        }
-        #instagram-section h2 {
-            color: #0ABAB5;
-            margin-bottom: 25px;
+            margin-top: 10px;
+            margin-bottom: 15px;
             font-weight: 600;
-        }
-        /* 埋め込みコンテンツがコンテナ幅を超えないようにする */
-        #instagram-embed-content {
-            max-width: 100%; 
-            overflow: hidden;
-            display: inline-block; /* センタリングのため */
-        }
-        /* Instagramの埋め込みブロックquote自体がレスポンシブに対応するための調整 */
-        .instagram-media {
-            min-width: 300px !important; /* スマホで小さくなりすぎないように */
-            width: 100% !important;
         }
 
         /* 固定ヘッダーのスタイル設定 */
         #fixed-header {
-            position: sticky; 
+            position: sticky;
             top: 0;
             z-index: 1000;
             background-color: #ffffff;
@@ -59,15 +46,9 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
-        h1 {
-            color: #00A3A0; 
-            text-align: center;
-            margin-top: 10px;
-            margin-bottom: 15px; 
-            font-weight: 600;
-        }
-        
-        /* 認証UIのスタイル (省略) */
+        /* -------------------------------------- */
+        /* 2. 認証UIとボタンのスタイル */
+        /* -------------------------------------- */
         #auth-ui { text-align: right; margin-bottom: 5px; padding-bottom: 5px; border-bottom: 1px solid #eee; }
         #login-button, #logout-button, #mypage-button, #all-events-button { padding: 6px 12px; margin-left: 8px; border: none; border-radius: 5px; cursor: pointer; font-size: 0.85em; transition: background-color 0.2s; }
         #login-button { background-color: #0ABAB5; color: white; }
@@ -77,8 +58,10 @@
         #mypage-button, #all-events-button { background-color: #00A3A0; color: white; font-weight: bold; }
         #mypage-button:hover, #all-events-button:hover { background-color: #008f8c; }
         .view-active { background-color: #0ABAB5 !important; box-shadow: 0 0 0 2px #E0FFFF; }
-        
-        /* 検索フォームのスタイル (省略) */
+
+        /* -------------------------------------- */
+        /* 3. 検索とタグのスタイル */
+        /* -------------------------------------- */
         #search-controls { display: flex; gap: 10px; margin-bottom: 10px; padding: 10px 15px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9; }
         #search-input { flex-grow: 1; padding: 8px; border: 1px solid #ccc; border-radius: 5px; font-size: 1em; }
         #search-button, #clear-button { padding: 8px 12px; color: white; border: none; border-radius: 5px; font-size: 1em; cursor: pointer; transition: background-color 0.2s ease; }
@@ -86,14 +69,15 @@
         #search-button:hover { background-color: #008f8c; }
         #clear-button { background-color: #fbbc05; white-space: nowrap; }
         #clear-button:hover { background-color: #e0ac03; }
-        
-        /* タグボタンのスタイル (省略) */
+
         #tag-list { padding: 5px 0 15px 0; margin-bottom: 10px; border-bottom: 1px solid #eee; overflow-x: auto; white-space: nowrap; }
         .tag-button { background-color: #e0e0e0; color: #333; border: 1px solid #ccc; padding: 4px 10px; margin-right: 6px; margin-bottom: 6px; border-radius: 18px; font-size: 0.8em; cursor: pointer; transition: background-color 0.2s, color 0.2s, border-color 0.2s; display: inline-block; }
         .tag-button:hover { background-color: #d0d0d0; }
         .tag-button.active { background-color: #0ABAB5; color: white; border-color: #0ABAB5; font-weight: bold; }
 
-        /* イベントカードのスタイル (省略) */
+        /* -------------------------------------- */
+        /* 4. イベントカードのスタイル */
+        /* -------------------------------------- */
         #events-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; }
         .event-card { background-color: #E0FFFF; border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); transition: transform 0.2s ease-in-out; position: relative; }
         .event-card:hover { transform: translateY(-5px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); }
@@ -105,19 +89,37 @@
         .event-tags { margin-top: 10px; font-size: 0.85em; color: #757575; }
         .event-tag { display: inline-block; background-color: #cccccc; color: #333; padding: 3px 8px; margin-right: 5px; margin-bottom: 5px; border-radius: 4px; }
 
-        /* お気に入りボタンのスタイル (省略) */
+        /* お気に入りボタンのスタイル */
         .favorite-button { position: absolute; top: 10px; right: 10px; font-size: 24px; cursor: pointer; z-index: 10; user-select: none; transition: transform 0.1s; }
         .favorite-button:hover { transform: scale(1.1); }
         .favorite-button.empty { color: #a0a0a0; }
-        .favorite-button.filled { color: #ff4d4d; } 
+        .favorite-button.filled { color: #ff4d4d; }
 
-        .loading-message, .error-message { text-align: center; font-size: 1.1em; margin-top: 20px; padding: 15px; border-radius: 5px; }
-        .loading-message { background-color: #fff3cd; color: #856404; }
-        .error-message { background-color: #f8d7da; color: #721c24; }
-        #loadEventsButton { display: none; }
-
-
-        /* --- 携帯端末 (幅600px以下) 用の最適化スタイル (レスポンシブ対応) --- */
+        /* -------------------------------------- */
+        /* 5. Tagembedセクションのスタイル */
+        /* -------------------------------------- */
+        #social-feed-section {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            text-align: center;
+        }
+        #social-feed-section h2 {
+            color: #0ABAB5;
+            margin-bottom: 25px;
+            font-weight: 600;
+        }
+        #embed-widget-container {
+            max-width: 100%;
+            overflow: hidden;
+            display: inline-block;
+            height: 500px; /* フィードの表示高さを設定（必要に応じて調整） */
+            width: 100%;
+        }
+        
+        /* -------------------------------------- */
+        /* 6. モバイル最適化 (600px以下) */
+        /* -------------------------------------- */
         @media (max-width: 600px) {
             body { padding: 5px; }
             .container { margin: 0; padding: 10px; box-shadow: none; }
@@ -127,6 +129,10 @@
             #search-button, #clear-button { width: 100%; box-sizing: border-box; }
             #auth-ui { text-align: center; margin-bottom: 5px; }
             #auth-ui button, #auth-ui span { margin: 3px 3px; display: inline-block; font-size: 0.9em; }
+            /* モバイルで埋め込みの高さが大きすぎる場合は、ここで調整 */
+            #embed-widget-container {
+                height: 400px; 
+            }
         }
     </style>
 </head>
@@ -158,15 +164,16 @@
             <p class="loading-message" id="initial-message">イベント情報をロード中...</p>
         </div>
 
-        <div id="instagram-section">
-            <h2>最新のInstagram投稿</h2>
-            <div id="instagram-embed-content">
-                <blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DSPo1egEz0f/" data-instgrm-version="14" style=" background:#FFF; border:0; border-radius:3px; box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15); margin: 1px; max-width:540px; min-width:326px; padding:0; width:99.375%; width:-webkit-calc(100% - 2px); width:calc(100% - 2px);"><div style="padding:16px;"> <a href="https://www.instagram.com/p/DSPo1egEz0f/" style=" background:#FFFFFF; line-height:0; padding:0 0; text-align:center; text-decoration:none; width:100%;" target="_blank"> <div style=" display: flex; flex-direction: row; align-items: center;"></div><div style="padding: 19% 0;"></div> <div style="display:block; height:50px; margin:0 auto; width:50px;"><svg width="50px" height="50px" viewBox="0 0 60 60" version="1.1" xmlns="https://www.w3.org/2000/svg" xmlns:xlink="https://www.w3.org/1999/xlink"><g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd"><g transform="translate(-511.000000, -20.000000)" fill="#000000"><g><path d="M556.869,30.41 C554.814,30.41 553.148,32.076 553.148,34.131 C553.148,36.186 554.814,37.852 556.869,37.852 C558.924,37.852 560.59,36.186 560.59,34.131 C560.59,32.076 558.924,30.41 556.869,30.41 M541,60.657 C535.115,60.657 530.342,55.887 530.342,50 C530.342,44.114 535.115,39.342 541,39.342 C546.885,39.342 551.658,44.114 551.658,50 C551.658,55.887 546.885,60.657 541,60.657 M541,33.886 C532.172,33.886 524.886,41.172 524.886,50 C524.886,58.828 532.172,66.114 541,66.114 C549.828,66.114 557.114,58.828 557.114,50 C557.114,41.172 549.828,33.886 541,33.886 M565.378,62.101 C566.068,62.101 566.83,62.158 567.652,62.274 C568.537,62.404 569.373,62.545 570.106,62.808 C570.66,63.029 571.187,63.268 571.697,63.551 C572.247,63.855 572.768,64.218 573.292,64.672 C574.457,65.748 575.059,67.147 575.322,69.176 C575.602,71.229 575.617,73.456 575.46,75.474 C575.312,77.426 575.029,79.526 574.604,81.332 C574.07,83.475 573.1,85.127 571.979,86.467 C570.923,87.81 569.314,88.384 566.974,88.65 C565.343,88.835 563.468,88.889 561.42,88.756 C559.865,88.649 557.915,88.423 556.24,88.082 C555.457,87.923 554.77,87.728 554.108,87.5 C552.887,87.063 551.691,86.539 550.603,85.922 C550.089,85.631 549.566,85.32 549.043,84.992 C548.156,84.42 547.454,83.921 546.75,83.242 C545.897,82.41 545.247,81.189 544.88,79.088 C544.529,77.108 544.551,74.795 544.707,72.47 C544.857,70.198 545.195,68.086 545.643,66.191 C546.107,64.331 546.857,62.83 548.113,61.597 C549.278,60.444 550.844,59.855 553.148,59.601 C554.674,59.431 556.333,59.399 557.92,59.431 C560.038,59.472 562.036,59.58 563.666,59.855 C564.444,59.988 565.334,60.183 566.279,60.428 C567.039,60.627 567.824,60.852 568.618,61.169 C569.499,61.523 570.472,62.013 571.491,62.668 C572.781,63.5 573.743,64.673 574.209,66.216 C574.677,67.757 574.757,69.606 574.524,71.594 C574.334,73.18 573.916,74.928 573.284,76.549 C572.639,78.229 571.745,79.79 570.613,81.168 C569.467,82.593 567.924,83.332 565.378,83.504 C563.864,83.606 562.062,83.674 559.957,83.674 C558.053,83.674 556.096,83.621 554.192,83.504 C551.464,83.332 549.404,82.384 548.336,81.168 C547.458,80.17 546.908,78.783 546.606,76.603 C546.334,74.792 546.353,72.695 546.467,70.528 C546.592,68.421 546.958,66.425 547.428,64.667 C547.931,62.863 548.66,61.353 549.914,60.17 C551.002,59.135 552.483,58.75 554.498,58.653 C556.326,58.557 558.172,58.588 559.946,58.653 C561.765,58.74 563.633,59.027 565.378,59.601 M556.869,32.228 C554.814,32.228 553.148,33.894 553.148,35.95 C553.148,38.005 554.814,39.671 556.869,39.671 C558.924,39.671 560.59,38.005 560.59,35.95 C560.59,33.894 558.924,32.228 556.869,32.228 M541,41.157 C533.155,41.157 526.886,47.426 526.886,55.27 C526.886,63.115 533.155,69.384 541,69.384 C548.845,69.384 555.114,63.115 555.114,55.27 C555.114,47.426 548.845,41.157 541,41.157" id="Fill-1"></path></g></g></g></svg></div><div style="padding-top: 8px;"> <div style=" color:#3897f0; font-family:Arial,sans-serif; font-size:14px; font-style:normal; font-weight:550; line-height:18px;"> View this post on Instagram</div></div><div style="padding: 12.5% 0;"></div> <div style="display: flex; flex-direction: row; margin-bottom: 14px; align-items: center;"><div> <div style="background-color: #F4F4F4; border-radius: 50%; height: 12.5px; width: 12.5px; transform: translateX(1px); margin-right: 7px;"></div> <div style="background-color: #F4F4F4; height: 12.5px; transform: rotate(-45deg) translateX(3px); width: 12.5px; flex-grow: 0; margin-left: 8px;"></div></div> <div style="display: flex; flex-direction: column; flex-grow: 1; justify-content: center; margin-left: 20px;"> <div style=" background-color: #F4F4F4; border-radius: 50%; height: 18px; width: 18px;"></div> <div style=" margin-left: 10px; background-color: #F4F4F4; height: 9px; border-radius: 3px; width: 35px;"></div></div> <div style="display: flex; flex-direction: row; margin: 0 auto;"> <div style=" background-color: #F4F4F4; border-radius: 50%; height: 10px; width: 10px;"></div> <div style=" margin-left: 2px; background-color: #F4F4F4; height: 10px; width: 10px; border-radius: 50%;"></div></div></div> <div style="padding-top: 8px;"> <div style=" color:#3897f0; font-family:Arial,sans-serif; font-size:14px; font-style:normal; font-weight:550; line-height:18px;"> A post shared by The Official Pokémon GO Twitter (@pokemongo)</div></div><div style="padding: 12.5% 0;"></div> <p style=" margin:8px 0 0 0; padding:0 4px; color:#c9c8cd; font-family:Arial,sans-serif; font-size:14px; line-height:17px; margin-bottom:0; margin-top:8px; overflow:hidden; padding:8px 0 7px; text-align:center; text-overflow:ellipsis; white-space:nowrap;"> <a href="https://www.instagram.com/p/DSPo1egEz0f/" style=" color:#c9c8cd; font-family:Arial,sans-serif; font-size:14px; font-style:normal; font-weight:normal; line-height:17px; text-decoration:none;" target="_blank">A post shared by The Official Pokémon GO Twitter (@pokemongo)</a> on <time style=" font-family:Arial,sans-serif; font-size:14px; line-height:17px;" datetime="2016-11-23T16:20:13+00:00">Nov 23, 2016 at 8:20am PST</time></p></div></blockquote>
-                </div>
+        <div id="social-feed-section">
+            <h2>ソーシャルメディア フィード</h2>
+            <div id="embed-widget-container">
+                <div class="tagembed-widget" style="width:100%;height:100%;overflow:auto;" data-widget-id="311234" data-website="1"></div>
+            </div>
         </div>
-    </div> 
+        </div> 
 
-    <script async src="//www.instagram.com/embed.js"></script> 
+    <script src="https://widget.tagembed.com/embed.min.js" type="text/javascript"></script> 
+
     <script type="module">
         // Firebase SDKの各モジュールをインポートします
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
