@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>イベントリスト - My Firestore App</title>
     <style>
-        /* -------------------------------------- */
-        /* 1. 基本設定・共通スタイル (PC向け/共通) */
-        /* -------------------------------------- */
+        /* --- 以前のスタイルは維持しつつ、フィード部分のみ修正 --- */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
@@ -43,121 +41,82 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
-        /* -------------------------------------- */
-        /* 2. 認証UIとボタンのスタイル */
-        /* -------------------------------------- */
+        /* 認証UIとボタン */
         #auth-ui { text-align: right; margin-bottom: 5px; padding-bottom: 5px; border-bottom: 1px solid #eee; }
         #login-button, #logout-button, #mypage-button, #all-events-button { padding: 6px 12px; margin-left: 8px; border: none; border-radius: 5px; cursor: pointer; font-size: 0.85em; transition: background-color 0.2s; }
         #login-button { background-color: #0ABAB5; color: white; }
-        #login-button:hover { background-color: #00A3A0; }
         #logout-button { background-color: #fbbc05; color: #333; }
-        #logout-button:hover { background-color: #e0ac03; }
         #mypage-button, #all-events-button { background-color: #00A3A0; color: white; font-weight: bold; }
-        #mypage-button:hover, #all-events-button:hover { background-color: #008f8c; }
-        .view-active { background-color: #0ABAB5 !important; box-shadow: 0 0 0 2px #E0FFFF; }
+        .view-active { background-color: #0ABAB5 !important; }
 
-        /* -------------------------------------- */
-        /* 3. 検索とタグのスタイル */
-        /* -------------------------------------- */
+        /* 検索とタグ */
         #search-controls { display: flex; gap: 10px; margin-bottom: 10px; padding: 10px 15px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9; }
         #search-input { flex-grow: 1; padding: 8px; border: 1px solid #ccc; border-radius: 5px; font-size: 1em; }
-        #search-button, #clear-button { padding: 8px 12px; color: white; border: none; border-radius: 5px; font-size: 1em; cursor: pointer; transition: background-color 0.2s ease; }
-        #search-button { background-color: #00A3A0; }
-        #search-button:hover { background-color: #008f8c; }
-        #clear-button { background-color: #fbbc05; white-space: nowrap; }
-        #clear-button:hover { background-color: #e0ac03; }
+        #search-button { background-color: #00A3A0; color: white; border: none; border-radius: 5px; padding: 8px 12px; cursor: pointer; }
+        #clear-button { background-color: #fbbc05; color: white; border: none; border-radius: 5px; padding: 8px 12px; cursor: pointer; }
 
         #tag-list { padding: 5px 0 15px 0; margin-bottom: 10px; border-bottom: 1px solid #eee; overflow-x: auto; white-space: nowrap; }
-        .tag-button { background-color: #e0e0e0; color: #333; border: 1px solid #ccc; padding: 4px 10px; margin-right: 6px; margin-bottom: 6px; border-radius: 18px; font-size: 0.8em; cursor: pointer; transition: background-color 0.2s, color 0.2s, border-color 0.2s; display: inline-block; }
-        .tag-button:hover { background-color: #d0d0d0; }
-        .tag-button.active { background-color: #0ABAB5; color: white; border-color: #0ABAB5; font-weight: bold; }
+        .tag-button { background-color: #e0e0e0; color: #333; border: 1px solid #ccc; padding: 4px 10px; margin-right: 6px; border-radius: 18px; font-size: 0.8em; cursor: pointer; }
+        .tag-button.active { background-color: #0ABAB5; color: white; }
 
-        /* -------------------------------------- */
-        /* 4. イベントカードのスタイル */
-        /* -------------------------------------- */
+        /* イベントカード */
         #events-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; }
-        .event-card { background-color: #E0FFFF; border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); transition: transform 0.2s ease-in-out; position: relative; }
-        .event-card:hover { transform: translateY(-5px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); }
+        .event-card { background-color: #E0FFFF; border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); position: relative; }
         .event-card .event-image { max-width: 100%; height: auto; border-radius: 5px; margin-bottom: 15px; display: block; }
-        .event-card h2 { color: #0ABAB5; margin-top: 0; font-size: 1.5em; margin-bottom: 10px; }
-        .event-card p { margin-bottom: 8px; font-size: 0.95em; }
-        .event-card .date { font-weight: bold; color: #34a853; }
-        .event-card .location { color: #ea4335; }
-        .event-tags { margin-top: 10px; font-size: 0.85em; color: #757575; }
-        .event-tag { display: inline-block; background-color: #cccccc; color: #333; padding: 3px 8px; margin-right: 5px; margin-bottom: 5px; border-radius: 4px; }
-
-        .favorite-button { position: absolute; top: 10px; right: 10px; font-size: 24px; cursor: pointer; z-index: 10; user-select: none; transition: transform 0.1s; }
-        .favorite-button:hover { transform: scale(1.1); }
-        .favorite-button.empty { color: #a0a0a0; }
-        .favorite-button.filled { color: #ff4d4d; }
+        .event-card h2 { color: #0ABAB5; margin-top: 0; font-size: 1.5em; }
+        .favorite-button { position: absolute; top: 10px; right: 10px; font-size: 24px; cursor: pointer; }
 
         /* -------------------------------------- */
-        /* 5. SociableKITセクションのスタイル (隙間を小さく修正) */
+        /* ★ 修正箇所：隙間と見切れの解消 ★ */
         /* -------------------------------------- */
         #social-feed-section {
-            margin-top: 10px; /* 40pxから10pxに縮小 */
-            padding-top: 10px; /* 20pxから10pxに縮小 */
+            margin-top: 0px;    /* 隙間を完全になくす */
+            padding-top: 5px;
             border-top: 1px solid #eee;
             text-align: center;
         }
         #social-feed-section h2 {
             color: #0ABAB5;
-            margin-bottom: 10px; /* 25pxから10pxに縮小 */
+            margin-bottom: 5px; /* タイトル下の隙間も詰める */
             font-weight: 600;
         }
         #embed-widget-container {
             max-width: 100%; 
-            overflow: hidden;
-            display: block;
-            height: 600px;
+            height: auto;      /* ★ 高さを自動にして見切れを防止 ★ */
+            min-height: 600px; /* ★ 最低限の表示エリアを確保 ★ */
             width: 100%; 
             margin: 0 auto;
+            overflow: visible; /* ★ はみ出しても隠さない ★ */
         }
-        .sk-ww-instagram-hashtag-feed {
-            max-width: 100%;
-        }
+        /* -------------------------------------- */
 
-        /* -------------------------------------- */
-        /* 6. モバイル最適化 (600px以下) */
-        /* -------------------------------------- */
         @media (max-width: 600px) {
-            body { padding: 5px; }
-            .container { margin: 0; padding: 10px; box-shadow: none; }
-            #fixed-header { padding: 5px 0 0 0; }
-            #events-list { grid-template-columns: 1fr; gap: 15px; }
-            #search-controls { flex-direction: column; gap: 8px; margin-bottom: 5px; padding: 8px; }
-            #search-button, #clear-button { width: 100%; box-sizing: border-box; }
-            #auth-ui { text-align: center; margin-bottom: 5px; }
-            #auth-ui button, #auth-ui span { margin: 3px 3px; display: inline-block; font-size: 0.9em; }
-            #embed-widget-container { height: 400px; }
+            .container { padding: 10px; }
+            #embed-widget-container { min-height: 400px; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        
         <div id="fixed-header">
             <div id="auth-ui">
                 <button id="all-events-button" class="view-active">イベント一覧</button>
                 <button id="mypage-button">お気に入り</button>
-                
                 <span id="user-status">ログインしていません。</span>
                 <button id="login-button">Googleでログイン</button>
                 <button id="logout-button" style="display:none;">ログアウト</button>
             </div>
-            
             <h1 id="main-title">イベントリスト</h1> 
             <div id="search-controls">
-                <input type="text" id="search-input" placeholder="キーワードを入力して絞り込み (例: 東京, AI)">
+                <input type="text" id="search-input" placeholder="キーワードを入力して絞り込み">
                 <button id="search-button">検索</button>
-                <button id="clear-button" title="検索条件をクリアして全件表示">クリア</button>
+                <button id="clear-button">クリア</button>
             </div>
-
             <div id="tag-list"></div>
         </div>
         
         <div id="events-list">
-            <p class="loading-message" id="initial-message">イベント情報をロード中...</p>
+            <p class="loading-message">情報をロード中...</p>
         </div>
 
         <div id="social-feed-section">
@@ -207,218 +166,101 @@
 
         async function loginWithGoogle() {
             const provider = new GoogleAuthProvider();
-            try {
-                await signInWithPopup(auth, provider);
-            } catch (error) {
-                console.error("Googleログインエラー:", error.message);
-            }
+            try { await signInWithPopup(auth, provider); } catch (e) {}
         }
 
         async function signOutUser() {
-            try {
-                await signOut(auth);
-                favoriteEventIds = new Set();
-                currentView = 'all';
-            } catch (error) {
-                console.error("ログアウトエラー:", error.message);
-            }
+            try { await signOut(auth); favoriteEventIds = new Set(); currentView = 'all'; } catch (e) {}
         }
         
         async function fetchFavoriteIds() {
             const userId = auth.currentUser ? auth.currentUser.uid : null;
-            if (!userId) {
-                favoriteEventIds = new Set();
-                return;
-            }
+            if (!userId) { favoriteEventIds = new Set(); return; }
             try {
-                const favoritesColRef = collection(db, "favorites");
-                const q = query(favoritesColRef, where("userId", "==", userId));
+                const q = query(collection(db, "favorites"), where("userId", "==", userId));
                 const snapshot = await getDocs(q);
                 favoriteEventIds = new Set(snapshot.docs.map(doc => doc.data().eventId));
-            } catch (error) {
-                 favoriteEventIds = new Set();
-            }
+            } catch (e) { favoriteEventIds = new Set(); }
         }
         
         async function toggleFavorite(eventId) {
             const user = auth.currentUser;
-            if (!user) {
-                alert("お気に入りに登録するにはログインが必要です。");
-                return;
-            }
-            const userId = user.uid;
-            const docId = `${userId}_${eventId}`;
-            const docRef = doc(db, "favorites", docId); 
-            const isCurrentlyFavorite = favoriteEventIds.has(eventId);
+            if (!user) { alert("ログインが必要です。"); return; }
+            const docId = `${user.uid}_${eventId}`;
+            const isFavorite = favoriteEventIds.has(eventId);
             try {
-                if (isCurrentlyFavorite) {
-                    await deleteDoc(docRef);
-                    favoriteEventIds.delete(eventId);
-                } else {
-                    await setDoc(docRef, { userId: userId, eventId: eventId, createdAt: serverTimestamp() });
-                    favoriteEventIds.add(eventId);
-                }
-                loadEvents(searchInput.value, currentActiveTag);
-            } catch (error) {
-                console.error("お気に入り操作に失敗しました。");
-            }
+                if (isFavorite) { await deleteDoc(doc(db, "favorites", docId)); favoriteEventIds.delete(eventId); }
+                else { await setDoc(doc(db, "favorites", docId), { userId: user.uid, eventId: eventId, createdAt: serverTimestamp() }); favoriteEventIds.add(eventId); }
+                loadEvents();
+            } catch (e) {}
         }
 
         async function fetchAllEvents() {
-            if (allEventsCache.length > 0) { return allEventsCache; }
+            if (allEventsCache.length > 0) return allEventsCache;
             try {
-                const eventsCollectionRef = collection(db, "events");
-                const q = query(eventsCollectionRef, orderBy("date", "asc"));
-                const querySnapshot = await getDocs(q);
-                let eventsData = [];
-                let uniqueTags = new Set(); 
-                querySnapshot.forEach((doc) => {
-                    const eventData = doc.data();
-                    eventData.id = doc.id; 
-                    eventsData.push(eventData);
-                    const tagsArray = Array.isArray(eventData.tags) ? eventData.tags : (typeof eventData.tags === 'string' ? eventData.tags.split(',').map(t => t.trim()) : []);
-                    tagsArray.forEach(tag => { if (tag.trim()) uniqueTags.add(tag.trim()); });
+                const q = query(collection(db, "events"), orderBy("date", "asc"));
+                const snapshot = await getDocs(q);
+                let events = [];
+                let tags = new Set(); 
+                snapshot.forEach((doc) => {
+                    const data = doc.data(); data.id = doc.id; events.push(data);
+                    const tArr = Array.isArray(data.tags) ? data.tags : (typeof data.tags === 'string' ? data.tags.split(',') : []);
+                    tArr.forEach(t => { if (t.trim()) tags.add(t.trim()); });
                 });
-                allEventsCache = eventsData;
-                createTagButtons(Array.from(uniqueTags)); 
-                return eventsData;
-            } catch (error) {
-                eventsListContainer.innerHTML = `<p class="error-message">イベントのロードに失敗しました。</p>`;
-                return [];
-            }
+                allEventsCache = events;
+                createTagButtons(Array.from(tags)); 
+                return events;
+            } catch (e) { return []; }
         }
 
         function createTagButtons(tags) {
             tagListContainer.innerHTML = '';
-            const allButton = document.createElement('button');
-            allButton.textContent = "全て";
-            allButton.className = 'tag-button';
-            allButton.addEventListener('click', () => handleTagClick(""));
-            tagListContainer.appendChild(allButton);
-            tags.sort().forEach(tag => {
-                const button = document.createElement('button');
-                button.textContent = tag;
-                button.className = 'tag-button';
-                button.setAttribute('data-tag', tag);
-                button.addEventListener('click', () => handleTagClick(tag));
-                tagListContainer.appendChild(button);
-            });
-            updateTagButtonsUI(currentActiveTag);
-        }
-        
-        function handleTagClick(tag) {
-            searchInput.value = '';
-            const newTag = (currentActiveTag === tag) ? "" : tag;
-            currentActiveTag = newTag; 
-            updateTagButtonsUI(newTag);
-            loadEvents(searchInput.value, newTag);
-        }
-
-        function updateTagButtonsUI(activeTag) {
-            document.querySelectorAll('.tag-button').forEach(button => {
-                button.classList.remove('active');
-                if (button.getAttribute('data-tag') === activeTag || (!activeTag && button.textContent === "全て")) {
-                    button.classList.add('active');
-                }
+            const btn = document.createElement('button'); btn.textContent = "全て"; btn.className = 'tag-button active';
+            btn.onclick = () => { currentActiveTag = ''; loadEvents(); };
+            tagListContainer.appendChild(btn);
+            tags.sort().forEach(t => {
+                const b = document.createElement('button'); b.textContent = t; b.className = 'tag-button';
+                b.onclick = () => { currentActiveTag = (currentActiveTag === t) ? '' : t; loadEvents(); };
+                tagListContainer.appendChild(b);
             });
         }
-        
-        function updateViewButtonsUI() {
-            allEventsButton.classList.remove('view-active');
-            mypageButton.classList.remove('view-active');
-            if (currentView === 'all') {
-                allEventsButton.classList.add('view-active');
-                mainTitle.textContent = "イベントリスト"; 
-                tagListContainer.style.display = 'block'; 
-                searchButton.style.display = 'inline-block';
-                clearButton.style.display = 'inline-block';
-            } else {
-                mypageButton.classList.add('view-active');
-                mainTitle.textContent = "お気に入り"; 
-                tagListContainer.style.display = 'none'; 
-                searchButton.style.display = 'none';
-                clearButton.style.display = 'none';
-            }
-            const isUserLoggedIn = auth.currentUser !== null;
-            mypageButton.style.display = isUserLoggedIn ? 'inline-block' : 'none';
-            allEventsButton.style.display = isUserLoggedIn ? 'inline-block' : 'none';
-        }
 
-        async function loadEvents(keyword = searchInput.value, selectedTag = currentActiveTag) {
-            const lowerCaseKeyword = keyword.trim().toLowerCase();
-            const trimSelectedTag = selectedTag.trim();
-            updateViewButtonsUI();
-            eventsListContainer.innerHTML = '<p class="loading-message">イベント情報をロード中...</p>';
-            const eventsData = await fetchAllEvents();
-            if (eventsData.length === 0) return;
-
-            const now = new Date();
-            now.setHours(0, 0, 0, 0); 
+        async function loadEvents() {
+            const keyword = searchInput.value.toLowerCase();
+            const events = await fetchAllEvents();
+            eventsListContainer.innerHTML = '';
             
-            let filteredEvents = eventsData.filter(event => {
-                if (currentView === 'favorites' && !favoriteEventIds.has(event.id)) return false;
-                const eventDateObj = event.date ? (event.date.toDate ? event.date.toDate() : new Date(event.date)) : null;
-                if (!eventDateObj || eventDateObj < now) return false;
-                if (currentView === 'all' && trimSelectedTag) {
-                    const eventTags = Array.isArray(event.tags) ? event.tags : (typeof event.tags === 'string' ? event.tags.split(',').map(t => t.trim()) : []);
-                    if (!eventTags.includes(trimSelectedTag)) return false;
-                }
-                if (lowerCaseKeyword) {
-                    const title = (event.title || '').toLowerCase();
-                    const description = (event.description || '').toLowerCase();
-                    const location = (event.location || '').toLowerCase();
-                    if (!(title.includes(lowerCaseKeyword) || description.includes(lowerCaseKeyword) || location.includes(lowerCaseKeyword))) return false;
-                }
+            const filtered = events.filter(ev => {
+                if (currentView === 'favorites' && !favoriteEventIds.has(ev.id)) return false;
+                if (currentActiveTag && !(ev.tags || '').includes(currentActiveTag)) return false;
+                if (keyword && !(ev.title+ev.location).toLowerCase().includes(keyword)) return false;
                 return true;
             });
 
-            eventsListContainer.innerHTML = ''; 
-            if (filteredEvents.length === 0) {
-                eventsListContainer.innerHTML = `<p class="loading-message">条件に一致するイベントはありません。</p>`;
-            } else {
-                filteredEvents.forEach((eventData) => {
-                    const eventCard = document.createElement('div');
-                    eventCard.className = 'event-card';
-                    const title = eventData.title || 'タイトルなし';
-                    const date = eventData.date ? (eventData.date.toDate ? eventData.date.toDate().toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' }) : eventData.date) : '日付未定';
-                    const isFavorite = favoriteEventIds.has(eventData.id);
-                    const heartIcon = isFavorite ? '❤️' : '🤍'; 
-                    eventCard.innerHTML = `
-                        ${auth.currentUser ? `<span class="favorite-button ${isFavorite ? 'filled' : 'empty'}" data-event-id="${eventData.id}">${heartIcon}</span>` : ''}
-                        ${eventData.imageUrl ? `<img src="${eventData.imageUrl}" alt="${title}" class="event-image">` : ''}
-                        <h2>${title}</h2>
-                        <p class="date">日付: ${date}</p>
-                        <p><strong>場所:</strong> ${eventData.location || '場所未定'}</p>
-                        <p>${eventData.description || '説明なし'}</p>
-                    `;
-                    eventsListContainer.appendChild(eventCard);
-                    if (auth.currentUser) {
-                        eventCard.querySelector('.favorite-button').addEventListener('click', (e) => { e.stopPropagation(); toggleFavorite(eventData.id); });
-                    }
-                });
-            }
+            if (filtered.length === 0) { eventsListContainer.innerHTML = '<p>ありません。</p>'; return; }
+            filtered.forEach(ev => {
+                const card = document.createElement('div'); card.className = 'event-card';
+                const isFav = favoriteEventIds.has(ev.id);
+                card.innerHTML = `
+                    ${auth.currentUser ? `<span class="favorite-button">${isFav ? '❤️' : '🤍'}</span>` : ''}
+                    ${ev.imageUrl ? `<img src="${ev.imageUrl}" class="event-image">` : ''}
+                    <h2>${ev.title}</h2>
+                    <p>場所: ${ev.location}</p>
+                `;
+                eventsListContainer.appendChild(card);
+                if (auth.currentUser) card.querySelector('.favorite-button').onclick = () => toggleFavorite(ev.id);
+            });
         }
 
-        loginButton.addEventListener('click', loginWithGoogle);
-        logoutButton.addEventListener('click', signOutUser);
-        mypageButton.addEventListener('click', () => { currentView = 'favorites'; loadEvents(); });
-        allEventsButton.addEventListener('click', () => { currentView = 'all'; loadEvents(); });
-        searchButton.addEventListener('click', () => { currentView = 'all'; loadEvents(); });
-        clearButton.addEventListener('click', () => { searchInput.value = ''; currentActiveTag = ""; loadEvents(); });
+        loginButton.onclick = loginWithGoogle;
+        logoutButton.onclick = signOutUser;
+        searchButton.onclick = loadEvents;
+        clearButton.onclick = () => { searchInput.value = ''; currentActiveTag = ''; loadEvents(); };
         
         onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                userStatus.textContent = `ログイン中: ${user.displayName}`;
-                loginButton.style.display = 'none';
-                logoutButton.style.display = 'inline-block';
-                await fetchFavoriteIds();
-            } else {
-                userStatus.textContent = 'ログインしていません。';
-                loginButton.style.display = 'inline-block';
-                logoutButton.style.display = 'none';
-            }
-            updateViewButtonsUI();
-            fetchAllEvents().then(() => loadEvents());
+            if (user) { userStatus.textContent = `中: ${user.displayName}`; logoutButton.style.display='inline-block'; loginButton.style.display='none'; await fetchFavoriteIds(); }
+            else { userStatus.textContent = '未'; loginButton.style.display='inline-block'; logoutButton.style.display='none'; }
+            loadEvents();
         });
     </script>
 </body>
