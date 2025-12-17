@@ -17,7 +17,6 @@
             line-height: 1.6;
         }
 
-        /* コンテナ (PC用の枠) */
         .container {
             max-width: 900px;
             margin: 20px auto;
@@ -27,7 +26,6 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
 
-        /* メインタイトル */
         h1 {
             color: #00A3A0;
             text-align: center;
@@ -36,7 +34,6 @@
             font-weight: 600;
         }
 
-        /* 固定ヘッダーのスタイル設定 */
         #fixed-header {
             position: sticky;
             top: 0;
@@ -76,7 +73,7 @@
         .tag-button.active { background-color: #0ABAB5; color: white; border-color: #0ABAB5; font-weight: bold; }
 
         /* -------------------------------------- */
-        /* 4. イベントカードのスタイル (省略) */
+        /* 4. イベントカードのスタイル */
         /* -------------------------------------- */
         #events-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; }
         .event-card { background-color: #E0FFFF; border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); transition: transform 0.2s ease-in-out; position: relative; }
@@ -89,36 +86,33 @@
         .event-tags { margin-top: 10px; font-size: 0.85em; color: #757575; }
         .event-tag { display: inline-block; background-color: #cccccc; color: #333; padding: 3px 8px; margin-right: 5px; margin-bottom: 5px; border-radius: 4px; }
 
-        /* お気に入りボタンのスタイル (省略) */
         .favorite-button { position: absolute; top: 10px; right: 10px; font-size: 24px; cursor: pointer; z-index: 10; user-select: none; transition: transform 0.1s; }
         .favorite-button:hover { transform: scale(1.1); }
         .favorite-button.empty { color: #a0a0a0; }
-        .favorite-button.filled { color: #ff4d4d; } 
+        .favorite-button.filled { color: #ff4d4d; }
 
         /* -------------------------------------- */
-        /* 5. SociableKITセクションのスタイル (調整済み) */
+        /* 5. SociableKITセクションのスタイル (隙間を小さく修正) */
         /* -------------------------------------- */
         #social-feed-section {
-            margin-top: 40px;
-            padding-top: 20px;
+            margin-top: 10px; /* 40pxから10pxに縮小 */
+            padding-top: 10px; /* 20pxから10pxに縮小 */
             border-top: 1px solid #eee;
             text-align: center;
         }
         #social-feed-section h2 {
             color: #0ABAB5;
-            margin-bottom: 25px;
+            margin-bottom: 10px; /* 25pxから10pxに縮小 */
             font-weight: 600;
         }
-        /* ★フィードのサイズ調整をここで行います★ */
         #embed-widget-container {
             max-width: 100%; 
             overflow: hidden;
-            display: block; /* 中央揃えのためにblockに */
-            height: 600px; /* ★高さを増やして表示エリアを確保しました★ */
+            display: block;
+            height: 600px;
             width: 100%; 
-            margin: 0 auto; /* 中央揃えを適用 */
+            margin: 0 auto;
         }
-        /* SociableKITのウィジェット要素自体にも最大幅を設定 */
         .sk-ww-instagram-hashtag-feed {
             max-width: 100%;
         }
@@ -135,7 +129,7 @@
             #search-button, #clear-button { width: 100%; box-sizing: border-box; }
             #auth-ui { text-align: center; margin-bottom: 5px; }
             #auth-ui button, #auth-ui span { margin: 3px 3px; display: inline-block; font-size: 0.9em; }
-            #embed-widget-container { height: 400px; } /* モバイルでは高さを少し抑える */
+            #embed-widget-container { height: 400px; }
         }
     </style>
 </head>
@@ -159,8 +153,7 @@
                 <button id="clear-button" title="検索条件をクリアして全件表示">クリア</button>
             </div>
 
-            <div id="tag-list">
-                </div>
+            <div id="tag-list"></div>
         </div>
         
         <div id="events-list">
@@ -173,35 +166,15 @@
                 <div class="sk-ww-instagram-hashtag-feed" data-embed-id="25633990"></div>
             </div>
         </div>
-        </div> 
+    </div> 
 
     <script src="https://widgets.sociablekit.com/instagram-hashtag-feed/widget.js" defer></script> 
 
     <script type="module">
-        // Firebase SDKの各モジュールをインポートします
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-        import { 
-            getFirestore, 
-            collection, 
-            getDocs, 
-            orderBy, 
-            query, 
-            where, 
-            doc, 
-            setDoc, 
-            deleteDoc,
-            serverTimestamp 
-        } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-        import { 
-            getAuth, 
-            signInWithPopup, 
-            GoogleAuthProvider, 
-            onAuthStateChanged,
-            signOut 
-        } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+        import { getFirestore, collection, getDocs, orderBy, query, where, doc, setDoc, deleteDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
-
-        // --- あなたのFirebaseプロジェクト設定 ---
         const firebaseConfig = {
             apiKey: "AIzaSyBH8EPKOwIBIMR16Z7PTECc2Lp0Y5cfkHQ",
             authDomain: "november5th-a1336.firebaseapp.com",
@@ -215,35 +188,29 @@
         const db = getFirestore(app);
         const auth = getAuth(app); 
 
-        // DOM要素への参照を取得
         const eventsListContainer = document.getElementById('events-list');
         const searchInput = document.getElementById('search-input');
         const searchButton = document.getElementById('search-button');
         const clearButton = document.getElementById('clear-button');
         const tagListContainer = document.getElementById('tag-list');
         const mainTitle = document.getElementById('main-title'); 
-
         const loginButton = document.getElementById('login-button');
         const logoutButton = document.getElementById('logout-button');
         const userStatus = document.getElementById('user-status');
         const mypageButton = document.getElementById('mypage-button');
         const allEventsButton = document.getElementById('all-events-button');
 
-
-        // グローバルな状態管理変数
         let allEventsCache = []; 
         let currentActiveTag = ''; 
         let favoriteEventIds = new Set(); 
         let currentView = 'all'; 
 
-        // --- 認証機能の関数 (省略) ---
         async function loginWithGoogle() {
             const provider = new GoogleAuthProvider();
             try {
                 await signInWithPopup(auth, provider);
             } catch (error) {
                 console.error("Googleログインエラー:", error.message);
-                alert("ログインに失敗しました: " + error.message);
             }
         }
 
@@ -254,7 +221,6 @@
                 currentView = 'all';
             } catch (error) {
                 console.error("ログアウトエラー:", error.message);
-                alert("ログアウトに失敗しました: " + error.message);
             }
         }
         
@@ -264,15 +230,12 @@
                 favoriteEventIds = new Set();
                 return;
             }
-
             try {
                 const favoritesColRef = collection(db, "favorites");
                 const q = query(favoritesColRef, where("userId", "==", userId));
                 const snapshot = await getDocs(q);
-                
                 favoriteEventIds = new Set(snapshot.docs.map(doc => doc.data().eventId));
             } catch (error) {
-                 console.error("お気に入りIDの取得中にエラーが発生しました:", error);
                  favoriteEventIds = new Set();
             }
         }
@@ -284,76 +247,54 @@
                 return;
             }
             const userId = user.uid;
-            
             const docId = `${userId}_${eventId}`;
             const docRef = doc(db, "favorites", docId); 
-            
             const isCurrentlyFavorite = favoriteEventIds.has(eventId);
-            
             try {
                 if (isCurrentlyFavorite) {
                     await deleteDoc(docRef);
                     favoriteEventIds.delete(eventId);
                 } else {
-                    await setDoc(docRef, {
-                        userId: userId,
-                        eventId: eventId,
-                        createdAt: serverTimestamp() 
-                    });
+                    await setDoc(docRef, { userId: userId, eventId: eventId, createdAt: serverTimestamp() });
                     favoriteEventIds.add(eventId);
                 }
-                
                 loadEvents(searchInput.value, currentActiveTag);
             } catch (error) {
-                console.error("お気に入り登録中にエラー:", error);
-                alert("お気に入り操作に失敗しました。Firestoreのルールを確認してください。");
+                console.error("お気に入り操作に失敗しました。");
             }
         }
 
-        // --- Firestoreデータ取得・表示関数 (省略) ---
         async function fetchAllEvents() {
             if (allEventsCache.length > 0) { return allEventsCache; }
-
             try {
                 const eventsCollectionRef = collection(db, "events");
                 const q = query(eventsCollectionRef, orderBy("date", "asc"));
                 const querySnapshot = await getDocs(q);
-                
                 let eventsData = [];
                 let uniqueTags = new Set(); 
-
                 querySnapshot.forEach((doc) => {
                     const eventData = doc.data();
                     eventData.id = doc.id; 
                     eventsData.push(eventData);
-
                     const tagsArray = Array.isArray(eventData.tags) ? eventData.tags : (typeof eventData.tags === 'string' ? eventData.tags.split(',').map(t => t.trim()) : []);
-                    tagsArray.forEach(tag => {
-                        const t = tag.trim();
-                        if (t) uniqueTags.add(t);
-                    });
+                    tagsArray.forEach(tag => { if (tag.trim()) uniqueTags.add(tag.trim()); });
                 });
-
                 allEventsCache = eventsData;
                 createTagButtons(Array.from(uniqueTags)); 
-                
                 return eventsData;
             } catch (error) {
-                console.error("イベントの取得中にエラーが発生しました:", error);
-                eventsListContainer.innerHTML = `<p class="error-message">イベントのロードに失敗しました。<br>エラー: ${error.message}</p>`;
+                eventsListContainer.innerHTML = `<p class="error-message">イベントのロードに失敗しました。</p>`;
                 return [];
             }
         }
 
         function createTagButtons(tags) {
             tagListContainer.innerHTML = '';
-            
             const allButton = document.createElement('button');
             allButton.textContent = "全て";
             allButton.className = 'tag-button';
             allButton.addEventListener('click', () => handleTagClick(""));
             tagListContainer.appendChild(allButton);
-
             tags.sort().forEach(tag => {
                 const button = document.createElement('button');
                 button.textContent = tag;
@@ -367,10 +308,8 @@
         
         function handleTagClick(tag) {
             searchInput.value = '';
-            
             const newTag = (currentActiveTag === tag) ? "" : tag;
             currentActiveTag = newTag; 
-            
             updateTagButtonsUI(newTag);
             loadEvents(searchInput.value, newTag);
         }
@@ -387,7 +326,6 @@
         function updateViewButtonsUI() {
             allEventsButton.classList.remove('view-active');
             mypageButton.classList.remove('view-active');
-            
             if (currentView === 'all') {
                 allEventsButton.classList.add('view-active');
                 mainTitle.textContent = "イベントリスト"; 
@@ -401,194 +339,86 @@
                 searchButton.style.display = 'none';
                 clearButton.style.display = 'none';
             }
-            
             const isUserLoggedIn = auth.currentUser !== null;
             mypageButton.style.display = isUserLoggedIn ? 'inline-block' : 'none';
             allEventsButton.style.display = isUserLoggedIn ? 'inline-block' : 'none';
         }
 
-
         async function loadEvents(keyword = searchInput.value, selectedTag = currentActiveTag) {
             const lowerCaseKeyword = keyword.trim().toLowerCase();
             const trimSelectedTag = selectedTag.trim();
-
             updateViewButtonsUI();
             eventsListContainer.innerHTML = '<p class="loading-message">イベント情報をロード中...</p>';
-            searchButton.disabled = true;
-            clearButton.disabled = true;
-            document.querySelectorAll('.tag-button').forEach(b => b.disabled = true);
-
             const eventsData = await fetchAllEvents();
-            if (eventsData.length === 0) {
-                 searchButton.disabled = false;
-                 clearButton.disabled = false;
-                 document.querySelectorAll('.tag-button').forEach(b => b.disabled = false);
-                 return;
-            }
+            if (eventsData.length === 0) return;
 
-            // 1. 複合フィルタリング
             const now = new Date();
             now.setHours(0, 0, 0, 0); 
             
             let filteredEvents = eventsData.filter(event => {
-                
-                // マイページフィルタリング
-                if (currentView === 'favorites' && !favoriteEventIds.has(event.id)) {
-                    return false;
-                }
-                
-                // 過去の日付を非表示
+                if (currentView === 'favorites' && !favoriteEventIds.has(event.id)) return false;
                 const eventDateObj = event.date ? (event.date.toDate ? event.date.toDate() : new Date(event.date)) : null;
-                if (!eventDateObj || eventDateObj < now) { return false; }
-                
-                // タグフィルタリング（全イベントビューでのみ適用）
+                if (!eventDateObj || eventDateObj < now) return false;
                 if (currentView === 'all' && trimSelectedTag) {
                     const eventTags = Array.isArray(event.tags) ? event.tags : (typeof event.tags === 'string' ? event.tags.split(',').map(t => t.trim()) : []);
-                    if (!eventTags.includes(trimSelectedTag)) { return false; }
+                    if (!eventTags.includes(trimSelectedTag)) return false;
                 }
-                
-                // キーワードフィルタリング
                 if (lowerCaseKeyword) {
                     const title = (event.title || '').toLowerCase();
                     const description = (event.description || '').toLowerCase();
                     const location = (event.location || '').toLowerCase();
-                    const tags = Array.isArray(event.tags) ? event.tags.join(' ').toLowerCase() : (event.tags || '').toLowerCase();
-
-                    if (!(title.includes(lowerCaseKeyword) ||
-                           description.includes(lowerCaseKeyword) ||
-                           location.includes(lowerCaseKeyword) ||
-                           tags.includes(lowerCaseKeyword))) { return false; }
+                    if (!(title.includes(lowerCaseKeyword) || description.includes(lowerCaseKeyword) || location.includes(lowerCaseKeyword))) return false;
                 }
                 return true;
             });
 
-            // 2. HTML描画
             eventsListContainer.innerHTML = ''; 
-
             if (filteredEvents.length === 0) {
-                let message = currentView === 'favorites' 
-                    ? `お気に入りのイベントはまだ登録されていません。`
-                    : `検索条件に一致するイベントは見つかりませんでした。`;
-                eventsListContainer.innerHTML = `<p class="loading-message">${message}</p>`;
+                eventsListContainer.innerHTML = `<p class="loading-message">条件に一致するイベントはありません。</p>`;
             } else {
                 filteredEvents.forEach((eventData) => {
                     const eventCard = document.createElement('div');
                     eventCard.className = 'event-card';
-
                     const title = eventData.title || 'タイトルなし';
                     const date = eventData.date ? (eventData.date.toDate ? eventData.date.toDate().toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' }) : eventData.date) : '日付未定';
-                    const description = eventData.description || '説明なし';
-                    const location = eventData.location || '場所未定';
-                    const imageUrl = eventData.imageUrl || ''; 
-                    const eventId = eventData.id; 
-                    
-                    const isFavorite = favoriteEventIds.has(eventId);
-                    const heartIconClass = isFavorite ? 'filled' : 'empty';
+                    const isFavorite = favoriteEventIds.has(eventData.id);
                     const heartIcon = isFavorite ? '❤️' : '🤍'; 
-                    
-                    let tagsHtml = '';
-                    const tagsArray = Array.isArray(eventData.tags) ? eventData.tags : (typeof eventData.tags === 'string' ? eventData.tags.split(',').map(t => t.trim()) : []);
-                    if (tagsArray.length > 0) {
-                        const tagSpans = tagsArray.map(tag => 
-                            `<span class="event-tag">${tag.trim()}</span>`
-                        ).join('');
-                        tagsHtml = `<div class="event-tags">${tagSpans}</div>`;
-                    }
-
                     eventCard.innerHTML = `
-                        ${auth.currentUser ? `<span class="favorite-button ${heartIconClass}" data-event-id="${eventId}">${heartIcon}</span>` : ''}
-                        ${imageUrl ? `<img src="${imageUrl}" alt="${title}" class="event-image">` : ''}
+                        ${auth.currentUser ? `<span class="favorite-button ${isFavorite ? 'filled' : 'empty'}" data-event-id="${eventData.id}">${heartIcon}</span>` : ''}
+                        ${eventData.imageUrl ? `<img src="${eventData.imageUrl}" alt="${title}" class="event-image">` : ''}
                         <h2>${title}</h2>
                         <p class="date">日付: ${date}</p>
-                        <p><strong>場所:</strong> ${location}</p>
-                        <p>${description}</p>
-                        ${tagsHtml}
+                        <p><strong>場所:</strong> ${eventData.location || '場所未定'}</p>
+                        <p>${eventData.description || '説明なし'}</p>
                     `;
                     eventsListContainer.appendChild(eventCard);
-                    
                     if (auth.currentUser) {
-                        const favButton = eventCard.querySelector('.favorite-button');
-                        if (favButton) {
-                            favButton.addEventListener('click', (e) => {
-                                e.stopPropagation(); 
-                                toggleFavorite(eventId);
-                            });
-                        }
+                        eventCard.querySelector('.favorite-button').addEventListener('click', (e) => { e.stopPropagation(); toggleFavorite(eventData.id); });
                     }
                 });
             }
-
-            searchButton.disabled = false;
-            clearButton.disabled = false;
-            document.querySelectorAll('.tag-button').forEach(b => b.disabled = false);
         }
 
-        // --- イベントリスナーの設定 ---
         loginButton.addEventListener('click', loginWithGoogle);
         logoutButton.addEventListener('click', signOutUser);
-
-        // ビュー切り替えリスナー
-        mypageButton.addEventListener('click', () => {
-            currentView = 'favorites';
-            currentActiveTag = '';
-            searchInput.value = '';
-            updateTagButtonsUI('');
-            loadEvents();
-        });
-
-        allEventsButton.addEventListener('click', () => {
-            currentView = 'all';
-            currentActiveTag = '';
-            searchInput.value = '';
-            updateTagButtonsUI('');
-            loadEvents();
-        });
-
-        searchButton.addEventListener('click', () => {
-            currentView = 'all'; 
-            currentActiveTag = "";
-            updateTagButtonsUI("");
-            loadEvents(searchInput.value, "");
-        });
-
-        clearButton.addEventListener('click', () => {
-            searchInput.value = '';
-            currentActiveTag = "";
-            updateTagButtonsUI("");
-            loadEvents('', "");
-        });
-
-        searchInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                searchButton.click();
-            }
-        });
+        mypageButton.addEventListener('click', () => { currentView = 'favorites'; loadEvents(); });
+        allEventsButton.addEventListener('click', () => { currentView = 'all'; loadEvents(); });
+        searchButton.addEventListener('click', () => { currentView = 'all'; loadEvents(); });
+        clearButton.addEventListener('click', () => { searchInput.value = ''; currentActiveTag = ""; loadEvents(); });
         
         onAuthStateChanged(auth, async (user) => {
-            const isUserLoggedIn = user !== null;
-            
             if (user) {
-                userStatus.textContent = `ログイン中: ${user.displayName || user.email}`;
+                userStatus.textContent = `ログイン中: ${user.displayName}`;
                 loginButton.style.display = 'none';
                 logoutButton.style.display = 'inline-block';
-                
                 await fetchFavoriteIds();
             } else {
                 userStatus.textContent = 'ログインしていません。';
                 loginButton.style.display = 'inline-block';
                 logoutButton.style.display = 'none';
             }
-            
             updateViewButtonsUI();
-
-            if (allEventsCache.length === 0 || isUserLoggedIn) {
-                fetchAllEvents().then(() => {
-                    loadEvents(); 
-                });
-            } else {
-                loadEvents();
-            }
+            fetchAllEvents().then(() => loadEvents());
         });
     </script>
 </body>
