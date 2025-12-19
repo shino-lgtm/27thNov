@@ -5,263 +5,76 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>イベントリスト - My Firestore App</title>
     <style>
-        /* --- 以前のスタイルは維持しつつ、フィード部分のみ修正 --- */
+        /* --- 基本設定 --- */
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
             margin: 0;
-            padding: 20px;
-            background-color: #f4f7f6;
+            padding: 0;
+            background-color: #f0f4f4; /* 落ち着いた背景色 */
             color: #333;
             line-height: 1.6;
         }
 
         .container {
-            max-width: 900px;
-            margin: 20px auto;
-            background-color: #ffffff;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: transparent;
+            padding: 20px;
+        }
+
+        /* --- 固定ヘッダーの強化 --- */
+        #fixed-header {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background-color: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px); /* 背景をぼかすモダンな効果 */
+            padding: 15px 20px;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #e0e8e8;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         }
 
         h1 {
             color: #00A3A0;
             text-align: center;
-            margin-top: 10px;
-            margin-bottom: 15px;
-            font-weight: 600;
+            margin: 0 0 15px 0;
+            font-size: 1.8em;
+            letter-spacing: 0.05em;
         }
 
-        #fixed-header {
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            background-color: #ffffff;
-            padding-bottom: 5px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        /* 認証UI */
+        #auth-ui { 
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 0.85em;
+        }
+        #user-status { margin-right: 10px; color: #666; }
+
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 20px; /* 丸みのあるボタン */
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+            font-weight: bold;
         }
 
-        /* 認証UIとボタン */
-        #auth-ui { text-align: right; margin-bottom: 5px; padding-bottom: 5px; border-bottom: 1px solid #eee; }
-        #login-button, #logout-button, #mypage-button, #all-events-button { padding: 6px 12px; margin-left: 8px; border: none; border-radius: 5px; cursor: pointer; font-size: 0.85em; transition: background-color 0.2s; }
         #login-button { background-color: #0ABAB5; color: white; }
-        #logout-button { background-color: #fbbc05; color: #333; }
-        #mypage-button, #all-events-button { background-color: #00A3A0; color: white; font-weight: bold; }
-        .view-active { background-color: #0ABAB5 !important; }
-
-        /* 検索とタグ */
-        #search-controls { display: flex; gap: 10px; margin-bottom: 10px; padding: 10px 15px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9; }
-        #search-input { flex-grow: 1; padding: 8px; border: 1px solid #ccc; border-radius: 5px; font-size: 1em; }
-        #search-button { background-color: #00A3A0; color: white; border: none; border-radius: 5px; padding: 8px 12px; cursor: pointer; }
-        #clear-button { background-color: #fbbc05; color: white; border: none; border-radius: 5px; padding: 8px 12px; cursor: pointer; }
-
-        #tag-list { padding: 5px 0 15px 0; margin-bottom: 10px; border-bottom: 1px solid #eee; overflow-x: auto; white-space: nowrap; }
-        .tag-button { background-color: #e0e0e0; color: #333; border: 1px solid #ccc; padding: 4px 10px; margin-right: 6px; border-radius: 18px; font-size: 0.8em; cursor: pointer; }
-        .tag-button.active { background-color: #0ABAB5; color: white; }
-
-        /* イベントカード */
-        #events-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; }
-        .event-card { background-color: #E0FFFF; border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); position: relative; }
-        .event-card .event-image { max-width: 100%; height: auto; border-radius: 5px; margin-bottom: 15px; display: block; }
-        .event-card h2 { color: #0ABAB5; margin-top: 0; font-size: 1.5em; }
-        .favorite-button { position: absolute; top: 10px; right: 10px; font-size: 24px; cursor: pointer; }
-
-        /* -------------------------------------- */
-        /* ★ 修正箇所：隙間と見切れの解消 ★ */
-        /* -------------------------------------- */
-        #social-feed-section {
-            margin-top: 0px;    /* 隙間を完全になくす */
-            padding-top: 5px;
-            border-top: 1px solid #eee;
-            text-align: center;
+        #logout-button { background-color: #fbbc05; color: white; }
+        #mypage-button, #all-events-button { 
+            background-color: #f0f4f4; 
+            color: #00A3A0; 
+            margin-right: 8px;
+            border: 1px solid #00A3A0;
         }
-        #social-feed-section h2 {
-            color: #0ABAB5;
-            margin-bottom: 5px; /* タイトル下の隙間も詰める */
-            font-weight: 600;
-        }
-        #embed-widget-container {
-            max-width: 100%; 
-            height: auto;      /* ★ 高さを自動にして見切れを防止 ★ */
-            min-height: 600px; /* ★ 最低限の表示エリアを確保 ★ */
-            width: 100%; 
-            margin: 0 auto;
-            overflow: visible; /* ★ はみ出しても隠さない ★ */
-        }
-        /* -------------------------------------- */
+        .view-active { background-color: #00A3A0 !important; color: white !important; }
 
-        @media (max-width: 600px) {
-            .container { padding: 10px; }
-            #embed-widget-container { min-height: 400px; }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div id="fixed-header">
-            <div id="auth-ui">
-                <button id="all-events-button" class="view-active">イベント一覧</button>
-                <button id="mypage-button">お気に入り</button>
-                <span id="user-status">ログインしていません。</span>
-                <button id="login-button">Googleでログイン</button>
-                <button id="logout-button" style="display:none;">ログアウト</button>
-            </div>
-            <h1 id="main-title">イベントリスト</h1> 
-            <div id="search-controls">
-                <input type="text" id="search-input" placeholder="キーワードを入力して絞り込み">
-                <button id="search-button">検索</button>
-                <button id="clear-button">クリア</button>
-            </div>
-            <div id="tag-list"></div>
-        </div>
-        
-        <div id="events-list">
-            <p class="loading-message">情報をロード中...</p>
-        </div>
-
-        <div id="social-feed-section">
-            <h2>Instagram ハッシュタグフィード</h2>
-            <div id="embed-widget-container">
-                <div class="sk-ww-instagram-hashtag-feed" data-embed-id="25633990"></div>
-            </div>
-        </div>
-    </div> 
-
-    <script src="https://widgets.sociablekit.com/instagram-hashtag-feed/widget.js" defer></script> 
-
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-        import { getFirestore, collection, getDocs, orderBy, query, where, doc, setDoc, deleteDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyBH8EPKOwIBIMR16Z7PTECc2Lp0Y5cfkHQ",
-            authDomain: "november5th-a1336.firebaseapp.com",
-            projectId: "november5th-a1336",
-            storageBucket: "november5th-a1336.firebasestorage.app",
-            messagingSenderId: "11537951889",
-            appId: "1:11537951889:web:d783b2298fc90f88a3a330"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app); 
-
-        const eventsListContainer = document.getElementById('events-list');
-        const searchInput = document.getElementById('search-input');
-        const searchButton = document.getElementById('search-button');
-        const clearButton = document.getElementById('clear-button');
-        const tagListContainer = document.getElementById('tag-list');
-        const mainTitle = document.getElementById('main-title'); 
-        const loginButton = document.getElementById('login-button');
-        const logoutButton = document.getElementById('logout-button');
-        const userStatus = document.getElementById('user-status');
-        const mypageButton = document.getElementById('mypage-button');
-        const allEventsButton = document.getElementById('all-events-button');
-
-        let allEventsCache = []; 
-        let currentActiveTag = ''; 
-        let favoriteEventIds = new Set(); 
-        let currentView = 'all'; 
-
-        async function loginWithGoogle() {
-            const provider = new GoogleAuthProvider();
-            try { await signInWithPopup(auth, provider); } catch (e) {}
-        }
-
-        async function signOutUser() {
-            try { await signOut(auth); favoriteEventIds = new Set(); currentView = 'all'; } catch (e) {}
-        }
-        
-        async function fetchFavoriteIds() {
-            const userId = auth.currentUser ? auth.currentUser.uid : null;
-            if (!userId) { favoriteEventIds = new Set(); return; }
-            try {
-                const q = query(collection(db, "favorites"), where("userId", "==", userId));
-                const snapshot = await getDocs(q);
-                favoriteEventIds = new Set(snapshot.docs.map(doc => doc.data().eventId));
-            } catch (e) { favoriteEventIds = new Set(); }
-        }
-        
-        async function toggleFavorite(eventId) {
-            const user = auth.currentUser;
-            if (!user) { alert("ログインが必要です。"); return; }
-            const docId = `${user.uid}_${eventId}`;
-            const isFavorite = favoriteEventIds.has(eventId);
-            try {
-                if (isFavorite) { await deleteDoc(doc(db, "favorites", docId)); favoriteEventIds.delete(eventId); }
-                else { await setDoc(doc(db, "favorites", docId), { userId: user.uid, eventId: eventId, createdAt: serverTimestamp() }); favoriteEventIds.add(eventId); }
-                loadEvents();
-            } catch (e) {}
-        }
-
-        async function fetchAllEvents() {
-            if (allEventsCache.length > 0) return allEventsCache;
-            try {
-                const q = query(collection(db, "events"), orderBy("date", "asc"));
-                const snapshot = await getDocs(q);
-                let events = [];
-                let tags = new Set(); 
-                snapshot.forEach((doc) => {
-                    const data = doc.data(); data.id = doc.id; events.push(data);
-                    const tArr = Array.isArray(data.tags) ? data.tags : (typeof data.tags === 'string' ? data.tags.split(',') : []);
-                    tArr.forEach(t => { if (t.trim()) tags.add(t.trim()); });
-                });
-                allEventsCache = events;
-                createTagButtons(Array.from(tags)); 
-                return events;
-            } catch (e) { return []; }
-        }
-
-        function createTagButtons(tags) {
-            tagListContainer.innerHTML = '';
-            const btn = document.createElement('button'); btn.textContent = "全て"; btn.className = 'tag-button active';
-            btn.onclick = () => { currentActiveTag = ''; loadEvents(); };
-            tagListContainer.appendChild(btn);
-            tags.sort().forEach(t => {
-                const b = document.createElement('button'); b.textContent = t; b.className = 'tag-button';
-                b.onclick = () => { currentActiveTag = (currentActiveTag === t) ? '' : t; loadEvents(); };
-                tagListContainer.appendChild(b);
-            });
-        }
-
-        async function loadEvents() {
-            const keyword = searchInput.value.toLowerCase();
-            const events = await fetchAllEvents();
-            eventsListContainer.innerHTML = '';
-            
-            const filtered = events.filter(ev => {
-                if (currentView === 'favorites' && !favoriteEventIds.has(ev.id)) return false;
-                if (currentActiveTag && !(ev.tags || '').includes(currentActiveTag)) return false;
-                if (keyword && !(ev.title+ev.location).toLowerCase().includes(keyword)) return false;
-                return true;
-            });
-
-            if (filtered.length === 0) { eventsListContainer.innerHTML = '<p>ありません。</p>'; return; }
-            filtered.forEach(ev => {
-                const card = document.createElement('div'); card.className = 'event-card';
-                const isFav = favoriteEventIds.has(ev.id);
-                card.innerHTML = `
-                    ${auth.currentUser ? `<span class="favorite-button">${isFav ? '❤️' : '🤍'}</span>` : ''}
-                    ${ev.imageUrl ? `<img src="${ev.imageUrl}" class="event-image">` : ''}
-                    <h2>${ev.title}</h2>
-                    <p>場所: ${ev.location}</p>
-                `;
-                eventsListContainer.appendChild(card);
-                if (auth.currentUser) card.querySelector('.favorite-button').onclick = () => toggleFavorite(ev.id);
-            });
-        }
-
-        loginButton.onclick = loginWithGoogle;
-        logoutButton.onclick = signOutUser;
-        searchButton.onclick = loadEvents;
-        clearButton.onclick = () => { searchInput.value = ''; currentActiveTag = ''; loadEvents(); };
-        
-        onAuthStateChanged(auth, async (user) => {
-            if (user) { userStatus.textContent = `中: ${user.displayName}`; logoutButton.style.display='inline-block'; loginButton.style.display='none'; await fetchFavoriteIds(); }
-            else { userStatus.textContent = '未'; loginButton.style.display='inline-block'; logoutButton.style.display='none'; }
-            loadEvents();
-        });
-    </script>
-</body>
-</html>
+        /* 検索バー */
+        #search-controls { 
+            display: flex; 
+            gap: 8px; 
+            margin-bottom: 15px;
