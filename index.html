@@ -26,31 +26,15 @@
         .event-image { width: 100%; height: 180px; object-fit: cover; border-radius: 8px; margin-bottom: 10px; }
         .favorite-button { position: absolute; top: 10px; right: 10px; cursor: pointer; font-size: 20px; background: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         
-        /* ★アクションボタンエリア★ */
-        .action-buttons {
-            display: flex;
-            gap: 8px;
-            margin-top: auto;
+        .action-buttons { display: flex; gap: 5px; margin-top: auto; }
+        .calendar-button, .line-button { 
+            flex: 1; font-size: 0.7em; padding: 8px 2px; text-decoration: none; text-align: center; border-radius: 20px; font-weight: bold; transition: 0.2s;
         }
-
-        .calendar-button, .mail-button { 
-            flex: 1;
-            font-size: 0.75em; 
-            padding: 8px 5px; 
-            text-decoration: none; 
-            text-align: center;
-            border-radius: 20px;
-            font-weight: bold;
-            transition: 0.2s;
-        }
-
-        /* カレンダーボタン (青) */
         .calendar-button { background: white; color: #4285F4; border: 1px solid #4285F4; }
+        /* LINEボタンの色 (緑) */
+        .line-button { background: white; color: #06C755; border: 1px solid #06C755; }
         .calendar-button:hover { background: #4285F4; color: white; }
-
-        /* メールボタン (赤) */
-        .mail-button { background: white; color: #ea4335; border: 1px solid #ea4335; }
-        .mail-button:hover { background: #ea4335; color: white; }
+        .line-button:hover { background: #06C755; color: white; }
 
         #social-feed-section { margin-top: 30px; padding: 20px; background: white; border-radius: 12px; text-align: center; }
     </style>
@@ -127,7 +111,6 @@
             document.getElementById('mypage-button').className = currentView === 'favorites' ? 'view-active' : '';
         }
 
-        // GoogleカレンダーURL生成
         function createCalendarUrl(e) {
             const title = encodeURIComponent(e.title || 'イベント');
             const location = encodeURIComponent(e.location || '');
@@ -140,17 +123,12 @@
             return `https://www.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dateStr}/${dateStr}&details=${details}&location=${location}`;
         }
 
-        // ★メールURL生成関数★
-        function createMailUrl(e) {
-            const subject = encodeURIComponent(`【おすすめ】イベント情報：${e.title}`);
-            const body = encodeURIComponent(
-                `以下のイベント情報を共有します。\n\n` +
-                `■イベント名: ${e.title}\n` +
-                `■場所: ${e.location}\n` +
-                `■詳細: ${e.description || 'なし'}\n\n` +
-                `詳細はこちらで確認できます:\n${window.location.href}`
+        // ★LINE共有URL生成関数★
+        function createLineUrl(e) {
+            const text = encodeURIComponent(
+                `【おすすめイベント】\n${e.title}\n📍場所: ${e.location}\n\n詳細はこちら：\n${window.location.href}`
             );
-            return `mailto:?subject=${subject}&body=${body}`;
+            return `https://line.me/R/msg/text/?${text}`;
         }
 
         async function toggleFav(id) {
@@ -196,7 +174,7 @@
                     <p>📍 ${e.location}</p>
                     <div class="action-buttons">
                         <a href="${createCalendarUrl(e)}" target="_blank" class="calendar-button">📅 カレンダー</a>
-                        <a href="${createMailUrl(e)}" class="mail-button">✉️ メール送る</a>
+                        <a href="${createLineUrl(e)}" target="_blank" class="line-button">💬 LINEで送る</a>
                     </div>
                 </div>
             `).join('') || '<p>該当なし</p>';
