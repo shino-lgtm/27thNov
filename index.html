@@ -26,18 +26,20 @@
         .event-image { width: 100%; height: 180px; object-fit: cover; border-radius: 8px; margin-bottom: 10px; }
         .favorite-button { position: absolute; top: 10px; right: 10px; cursor: pointer; font-size: 20px; background: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         
+        /* ★ボタンデザインの修正点★ */
         .action-buttons { display: flex; gap: 5px; margin-top: auto; flex-wrap: wrap; }
         .calendar-button, .line-button, .mail-button { 
-            flex: 1; font-size: 0.7em; padding: 8px 2px; text-decoration: none; text-align: center; border-radius: 20px; font-weight: bold; transition: 0.2s; min-width: 80px;
+            flex: 1; font-size: 0.7em; padding: 10px 2px; text-decoration: none; text-align: center; border-radius: 20px; font-weight: bold; transition: 0.2s; min-width: 80px; color: white; border: none;
         }
-        .calendar-button { background: white; color: #4285F4; border: 1px solid #4285F4; }
-        .line-button { background: white; color: #06C755; border: 1px solid #06C755; }
-        /* Gmail用ボタン（Googleレッド） */
-        .mail-button { background: white; color: #EA4335; border: 1px solid #EA4335; }
+        /* 各ボタンの塗りつぶし色 */
+        .calendar-button { background: #4285F4; }
+        .mail-button { background: #EA4335; }
+        .line-button { background: #06C755; }
 
-        .calendar-button:hover { background: #4285F4; color: white; }
-        .line-button:hover { background: #06C755; color: white; }
-        .mail-button:hover { background: #EA4335; color: white; }
+        /* ホバー時に少し暗くする演出 */
+        .calendar-button:hover { background: #3367D6; }
+        .mail-button:hover { background: #C5221F; }
+        .line-button:hover { background: #05A346; }
 
         #social-feed-section { margin-top: 30px; padding: 20px; background: white; border-radius: 12px; text-align: center; }
     </style>
@@ -133,7 +135,6 @@
             return `https://line.me/R/msg/text/?${text}`;
         }
 
-        // ★Web版Gmailの作成画面を新しいタブで開く関数★
         function createGmailUrl(e) {
             const baseUrl = "https://mail.google.com/mail/?view=cm&fs=1";
             const subject = encodeURIComponent(`【イベント情報】${e.title}`);
@@ -184,8 +185,8 @@
                     <p>📍 ${e.location}</p>
                     <div class="action-buttons">
                         <a href="${createCalendarUrl(e)}" target="_blank" class="calendar-button">📅 カレンダー</a>
-                        <a href="${createGmailUrl(e)}" target="_blank" class="mail-button">📧 Gmailで送る</a>
-                        <a href="${createLineUrl(e)}" target="_blank" class="line-button">💬 LINEで送る</a>
+                        <a href="${createGmailUrl(e)}" target="_blank" class="mail-button">📧 Gmail</a>
+                        <a href="${createLineUrl(e)}" target="_blank" class="line-button">💬 LINE</a>
                     </div>
                 </div>
             `).join('') || '<p>該当なし</p>';
