@@ -7,7 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
     <style>
         body { font-family: sans-serif; margin: 0; padding: 0; background-color: #f4f7f6; color: #333; }
-        .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
         h1 { color: #00A3A0; text-align: center; margin: 20px 0; }
         #fixed-header { position: sticky; top: 0; z-index: 1000; background: white; padding: 10px 20px; border-bottom: 1px solid #ddd; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         #auth-ui { text-align: right; margin-bottom: 10px; }
@@ -19,17 +19,21 @@
         #search-controls { display: flex; gap: 10px; margin: 10px 0; }
         #search-input { flex-grow: 1; padding: 8px; border-radius: 20px; border: 1px solid #ddd; }
         #tag-list { padding: 10px 0; overflow-x: auto; white-space: nowrap; }
-        .tag-button { background: white; margin-right: 5px; border-radius: 15px; padding: 5px 10px; }
-        .tag-button.active { background: #0ABAB5; color: white; }
+        .tag-button { background: white; margin-right: 5px; border-radius: 15px; padding: 5px 10px; border: 1px solid #ddd;}
+        .tag-button.active { background: #0ABAB5; color: white; border-color: #0ABAB5; }
+
+        /* ★レイアウトの修正: メインエリアを横並びに★ */
+        .main-content { display: flex; gap: 20px; flex-wrap: wrap; }
+        #events-list { flex: 2; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; min-width: 300px; }
         
-        /* リスト表示用 */
-        #events-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        /* ★小さなカレンダーのスタイル★ */
+        #calendar-view { flex: 1; min-width: 300px; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); height: fit-content; position: sticky; top: 150px; }
+        #calendar { font-size: 0.85em; } /* 文字を少し小さく */
+        .fc .fc-toolbar-title { font-size: 1.2em; } /* タイトルサイズ調整 */
+
         .event-card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: relative; display: flex; flex-direction: column; }
         .event-image { width: 100%; height: 180px; object-fit: cover; border-radius: 8px; margin-bottom: 10px; }
         .favorite-button { position: absolute; top: 10px; right: 10px; cursor: pointer; font-size: 20px; background: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        
-        /* カレンダー表示用 */
-        #calendar-view { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: none; margin-bottom: 20px; }
         
         .action-buttons { display: flex; gap: 5px; margin-top: auto; flex-wrap: wrap; }
         .calendar-button, .line-button, .mail-button { 
@@ -38,20 +42,14 @@
         .calendar-button { background: #4285F4; }
         .mail-button { background: #EA4335; }
         .line-button { background: #06C755; }
-        .calendar-button:hover { background: #3367D6; }
-        .mail-button:hover { background: #C5221F; }
-        .line-button:hover { background: #05A346; }
 
-        #social-feed-section { margin-top: 30px; padding: 20px; background: white; border-radius: 12px; text-align: center; }
+        #social-feed-section { margin-top: 30px; padding: 20px; background: white; border-radius: 12px; text-align: center; width: 100%; }
     </style>
 </head>
 <body>
     <div id="fixed-header">
         <div class="container">
             <div id="auth-ui">
-                <button id="all-events-button" class="view-active">リスト一覧</button>
-                <button id="show-calendar-button">カレンダー表示</button>
-                <button id="mypage-button">お気に入り</button>
                 <span id="user-status">読み込み中...</span>
                 <button id="login-button">ログイン</button>
                 <button id="logout-button" style="display:none;">ログアウト</button>
@@ -67,11 +65,14 @@
     </div>
 
     <div class="container">
-        <div id="calendar-view">
-            <div id="calendar"></div>
-        </div>
+        <div class="main-content">
+            <div id="events-list"></div>
 
-        <div id="events-list"></div>
+            <div id="calendar-view">
+                <h3 style="margin-top: 0; font-size: 1em; color: #00A3A0;">カレンダー確認</h3>
+                <div id="calendar"></div>
+            </div>
+        </div>
 
         <div id="social-feed-section">
             <h2>Instagram Feed</h2>
@@ -102,49 +103,22 @@
         const auth = getAuth(app);
 
         const eventsList = document.getElementById('events-list');
-        const calendarView = document.getElementById('calendar-view');
         const searchInput = document.getElementById('search-input');
         const tagList = document.getElementById('tag-list');
         const userStatus = document.getElementById('user-status');
 
         let allEvents = [];
         let favIds = new Set();
-        let currentDisplayMode = 'list'; // 'list' or 'calendar'
         let calendar;
 
-        // --- 切り替えロジック ---
-        document.getElementById('all-events-button').onclick = () => {
-            currentDisplayMode = 'list';
-            updateDisplay();
-        };
-        document.getElementById('show-calendar-button').onclick = () => {
-            currentDisplayMode = 'calendar';
-            updateDisplay();
-        };
-
-        function updateDisplay() {
-            if (currentDisplayMode === 'list') {
-                eventsList.style.display = 'grid';
-                calendarView.style.display = 'none';
-                document.getElementById('all-events-button').classList.add('view-active');
-                document.getElementById('show-calendar-button').classList.remove('view-active');
-            } else {
-                eventsList.style.display = 'none';
-                calendarView.style.display = 'block';
-                document.getElementById('all-events-button').classList.remove('view-active');
-                document.getElementById('show-calendar-button').classList.add('view-active');
-                calendar.render(); // 表示を切り替えた時にカレンダーを再描画
-            }
-        }
-
-        // --- カレンダー初期化 ---
+        // --- カレンダー初期化（ミニサイズ設定） ---
         function initCalendar(events) {
             const calendarEl = document.getElementById('calendar');
             const calendarEvents = events.map(e => {
                 const d = e.date.toDate ? e.date.toDate() : new Date(e.date);
                 return {
                     title: e.title,
-                    start: d.toISOString().split('T')[0], // yyyy-mm-dd形式
+                    start: d.toISOString().split('T')[0],
                     backgroundColor: '#00A3A0',
                     borderColor: '#00A3A0'
                 };
@@ -153,37 +127,34 @@
             calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 locale: 'ja',
+                height: 'auto', // コンテンツに合わせて高さを調整
                 events: calendarEvents,
                 headerToolbar: {
-                    left: 'prev,next today',
+                    left: 'prev',
                     center: 'title',
-                    right: ''
-                }
+                    right: 'next'
+                },
+                contentHeight: 350, // カレンダー自体をコンパクトに
             });
+            calendar.render();
         }
 
-        // --- カレンダーURL生成 (Google) ---
+        // --- URL生成系 ---
         function createCalendarUrl(e) {
             const title = encodeURIComponent(e.title || 'イベント');
             const location = encodeURIComponent(e.location || '');
-            const details = encodeURIComponent(e.description || '');
             let dateStr = "20241127";
             if (e.date) {
                 const d = e.date.toDate ? e.date.toDate() : new Date(e.date);
                 dateStr = d.toISOString().replace(/-|:|\.\d\d\d/g, "").split('T')[0];
             }
-            return `https://www.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dateStr}/${dateStr}&details=${details}&location=${location}`;
-        }
-
-        function createLineUrl(e) {
-            const text = encodeURIComponent(`【おすすめイベント】\n${e.title}\n📍場所: ${e.location}\n\n詳細はこちら：\n${window.location.href}`);
-            return `https://line.me/R/msg/text/?${text}`;
+            return `https://www.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dateStr}/${dateStr}&location=${location}`;
         }
 
         function createGmailUrl(e) {
             const baseUrl = "https://mail.google.com/mail/?view=cm&fs=1";
             const subject = encodeURIComponent(`【イベント情報】${e.title}`);
-            const body = encodeURIComponent(`イベントの詳細をシェアします。\n\nタイトル：${e.title}\n場所：${e.location}\n\n詳細はこちら：\n${window.location.href}`);
+            const body = encodeURIComponent(`イベント情報をシェアします。\n\n${e.title}\n📍場所: ${e.location}\n\n詳細はこちら：\n${window.location.href}`);
             return `${baseUrl}&su=${subject}&body=${body}`;
         }
 
@@ -191,10 +162,9 @@
             if (allEvents.length === 0) {
                 const snapshot = await getDocs(query(collection(db, "events"), orderBy("date", "asc")));
                 allEvents = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-                
-                // 初回ロード時にカレンダーを準備
                 initCalendar(allEvents);
-
+                
+                // タグ生成
                 const tags = new Set();
                 allEvents.forEach(e => (Array.isArray(e.tags) ? e.tags : (e.tags||'').split(',')).forEach(t => t.trim() && tags.add(t.trim())));
                 tagList.innerHTML = `<button class="tag-button active" id="tag-all">全て</button>` + 
@@ -209,14 +179,13 @@
 
             eventsList.innerHTML = filtered.map(e => `
                 <div class="event-card">
-                    ${auth.currentUser ? `<div class="favorite-button" data-id="${e.id}">${favIds.has(e.id)?'❤️':'🤍'}</div>` : ''}
                     ${e.imageUrl ? `<img src="${e.imageUrl}" class="event-image">` : ''}
                     <h3>${e.title}</h3>
                     <p>📍 ${e.location}</p>
                     <div class="action-buttons">
                         <a href="${createCalendarUrl(e)}" target="_blank" class="calendar-button">📅 登録</a>
                         <a href="${createGmailUrl(e)}" target="_blank" class="mail-button">📧 Gmail</a>
-                        <a href="${createLineUrl(e)}" target="_blank" class="line-button">💬 LINE</a>
+                        <a href="https://line.me/R/msg/text/?${encodeURIComponent(e.title)}" target="_blank" class="line-button">💬 LINE</a>
                     </div>
                 </div>
             `).join('') || '<p>該当なし</p>';
@@ -227,6 +196,10 @@
                 userStatus.textContent = user.displayName;
                 document.getElementById('logout-button').style.display = 'inline-block';
                 document.getElementById('login-button').style.display = 'none';
+            } else {
+                userStatus.textContent = '未ログイン';
+                document.getElementById('logout-button').style.display = 'none';
+                document.getElementById('login-button').style.display = 'inline-block';
             }
             load();
         });
