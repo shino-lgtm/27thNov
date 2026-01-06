@@ -24,7 +24,6 @@
         .main-content { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
         #events-list { flex: 1; min-width: 300px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
         
-        /* ★ミニカレンダー設定★ */
         #calendar-view { 
             width: 280px; 
             background: white; 
@@ -36,13 +35,16 @@
         }
         #calendar { font-size: 11px; }
 
-        /* ★カレンダーの土日を赤・青にする設定★ */
-        /* 日曜日（赤） */
-        .fc-day-sun .fc-col-header-cell-cushion,
-        .fc-day-sun .fc-daygrid-day-number { color: #EA4335 !important; }
-        /* 土曜日（青） */
-        .fc-day-sat .fc-col-header-cell-cushion,
-        .fc-day-sat .fc-daygrid-day-number { color: #4285F4 !important; }
+        /* --- ★土日を赤・青にするための最強設定★ --- */
+        /* 日曜日: 枠、日付、曜日のすべてを赤に */
+        .fc .fc-day-sun { background-color: #fff5f5 !important; }
+        .fc .fc-day-sun .fc-col-header-cell-cushion,
+        .fc .fc-day-sun .fc-daygrid-day-number { color: #EA4335 !important; }
+
+        /* 土曜日: 枠、日付、曜日のすべてを青に */
+        .fc .fc-day-sat { background-color: #f5faff !important; }
+        .fc .fc-day-sat .fc-col-header-cell-cushion,
+        .fc .fc-day-sat .fc-daygrid-day-number { color: #4285F4 !important; }
 
         .event-card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: relative; display: flex; flex-direction: column; }
         .event-image { width: 100%; height: 160px; object-fit: cover; border-radius: 8px; margin-bottom: 10px; }
@@ -109,7 +111,6 @@
         let favIds = new Set();
         let currentTag = '';
 
-        // カレンダー初期化
         function initCalendar(events) {
             const calendarEl = document.getElementById('calendar');
             const calendarEvents = events.map(e => {
@@ -132,7 +133,6 @@
             calendar.render();
         }
 
-        // イベント読み込み
         async function load() {
             try {
                 if (allEvents.length === 0) {
@@ -178,7 +178,6 @@
                     </div>
                 `}).join('') || '<p>該当なし</p>';
 
-                // お気に入りボタンのイベント登録
                 listContainer.querySelectorAll('.favorite-button').forEach(btn => {
                     btn.onclick = async () => {
                         const id = btn.dataset.id;
@@ -193,13 +192,28 @@
                         load();
                     };
                 });
-
-            } catch (err) {
-                console.error(err);
-                document.getElementById('events-list').innerHTML = "エラーが発生しました";
-            }
+            } catch (err) { console.error(err); }
         }
 
-        // 認証管理
         onAuthStateChanged(auth, async (user) => {
-            const status = document.getElementById('user
+            const status = document.getElementById('user-status');
+            if (user) {
+                status.textContent = user.displayName;
+                document.getElementById('logout-button').style.display = 'inline-block';
+                document.getElementById('login-button').style.display = 'none';
+                const fSnap = await getDocs(query(collection(db, "favorites"), where("userId", "==", user.uid)));
+                favIds = new Set(fSnap.docs.map(d => d.data().eventId));
+            } else {
+                status.textContent = '未ログイン';
+                document.getElementById('logout-button').style.display = 'none';
+                document.getElementById('login-button').style.display = 'inline-block';
+            }
+            load();
+        });
+
+        document.getElementById('login-button').onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
+        document.getElementById('logout-button').onclick = () => signOut(auth);
+        document.getElementById('search-button').onclick = () => load();
+    </script>
+</body>
+</html>
