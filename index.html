@@ -14,7 +14,6 @@
         
         button { padding: 8px 16px; margin-left: 5px; border-radius: 20px; border: 1px solid #00A3A0; cursor: pointer; font-weight: bold; transition: 0.2s; }
         #login-button { background: #0ABAB5; color: white; }
-        .view-active { background: #00A3A0; color: white; }
         
         #search-controls { display: flex; gap: 10px; margin: 10px 0; }
         #search-input { flex-grow: 1; padding: 8px; border-radius: 20px; border: 1px solid #ddd; }
@@ -22,13 +21,12 @@
         .tag-button { background: white; margin-right: 5px; border-radius: 15px; padding: 5px 10px; border: 1px solid #ddd; font-size: 0.85em;}
         .tag-button.active { background: #0ABAB5; color: white; }
 
-        /* レイアウト: リスト主役、カレンダー脇役 */
         .main-content { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
         #events-list { flex: 1; min-width: 300px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
         
-        /* ★極小カレンダー設定★ */
+        /* ★ミニカレンダー設定★ */
         #calendar-view { 
-            width: 250px; 
+            width: 280px; 
             background: white; 
             padding: 10px; 
             border-radius: 12px; 
@@ -36,25 +34,30 @@
             position: sticky; 
             top: 150px;
         }
-        #calendar { font-size: 10px; } /* 文字をさらに小さく */
-        .fc .fc-toolbar-title { font-size: 1em !important; }
-        .fc .fc-button { padding: 1px 4px !important; font-size: 0.8em !important; }
-        .fc-daygrid-day-number { padding: 1px !important; }
+        #calendar { font-size: 11px; }
+
+        /* ★カレンダーの土日を赤・青にする設定★ */
+        /* 日曜日（赤） */
+        .fc-day-sun .fc-col-header-cell-cushion,
+        .fc-day-sun .fc-daygrid-day-number { color: #EA4335 !important; }
+        /* 土曜日（青） */
+        .fc-day-sat .fc-col-header-cell-cushion,
+        .fc-day-sat .fc-daygrid-day-number { color: #4285F4 !important; }
 
         .event-card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: relative; display: flex; flex-direction: column; }
         .event-image { width: 100%; height: 160px; object-fit: cover; border-radius: 8px; margin-bottom: 10px; }
-        .favorite-button { position: absolute; top: 10px; right: 10px; cursor: pointer; font-size: 20px; background: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; z-index: 10; }
+        .favorite-button { position: absolute; top: 10px; right: 10px; cursor: pointer; font-size: 20px; background: white; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; z-index: 10; border: 1px solid #eee; }
         
-        .action-buttons { display: flex; gap: 5px; margin-top: auto; flex-wrap: wrap; }
+        .action-buttons { display: flex; gap: 5px; margin-top: auto; }
         .calendar-button, .line-button, .mail-button { 
-            flex: 1; font-size: 0.65em; padding: 8px 2px; text-decoration: none; text-align: center; border-radius: 20px; font-weight: bold; color: white; border: none;
+            flex: 1; font-size: 0.65em; padding: 10px 2px; text-decoration: none; text-align: center; border-radius: 20px; font-weight: bold; color: white !important;
         }
         .calendar-button { background: #4285F4; }
         .mail-button { background: #EA4335; }
         .line-button { background: #06C755; }
 
         @media (max-width: 600px) {
-            #calendar-view { width: 100%; position: static; order: -1; } /* スマホではカレンダーを上に */
+            #calendar-view { width: 100%; position: static; order: -1; margin-bottom: 20px; }
         }
     </style>
 </head>
@@ -106,6 +109,7 @@
         let favIds = new Set();
         let currentTag = '';
 
+        // カレンダー初期化
         function initCalendar(events) {
             const calendarEl = document.getElementById('calendar');
             const calendarEvents = events.map(e => {
@@ -113,7 +117,8 @@
                 return {
                     title: e.title,
                     start: d.toISOString().split('T')[0],
-                    backgroundColor: '#00A3A0'
+                    backgroundColor: '#00A3A0',
+                    borderColor: '#00A3A0'
                 };
             });
 
@@ -127,6 +132,7 @@
             calendar.render();
         }
 
+        // イベント読み込み
         async function load() {
             try {
                 if (allEvents.length === 0) {
@@ -136,8 +142,16 @@
                     
                     const tags = new Set();
                     allEvents.forEach(e => (Array.isArray(e.tags) ? e.tags : (e.tags||'').split(',')).forEach(t => t.trim() && tags.add(t.trim())));
-                    document.getElementById('tag-list').innerHTML = `<button class="tag-button active" id="tag-all">全て</button>` + 
+                    const tagList = document.getElementById('tag-list');
+                    tagList.innerHTML = `<button class="tag-button active" id="tag-all">全て</button>` + 
                         Array.from(tags).map(t => `<button class="tag-button" data-tag="${t}">${t}</button>`).join('');
+                    
+                    tagList.onclick = (e) => {
+                        if (e.target.tagName !== 'BUTTON') return;
+                        currentTag = e.target.dataset.tag || '';
+                        Array.from(tagList.children).forEach(btn => btn.classList.toggle('active', btn === e.target));
+                        load();
+                    };
                 }
 
                 const key = document.getElementById('search-input').value.toLowerCase();
@@ -147,9 +161,12 @@
                     return true;
                 });
 
-                document.getElementById('events-list').innerHTML = filtered.map(e => `
+                const listContainer = document.getElementById('events-list');
+                listContainer.innerHTML = filtered.map(e => {
+                    const isFav = favIds.has(e.id);
+                    return `
                     <div class="event-card">
-                        ${auth.currentUser ? `<div class="favorite-button" onclick="toggleFav('${e.id}')">${favIds.has(e.id)?'❤️':'🤍'}</div>` : ''}
+                        ${auth.currentUser ? `<div class="favorite-button" data-id="${e.id}">${isFav ? '❤️' : '🤍'}</div>` : ''}
                         ${e.imageUrl ? `<img src="${e.imageUrl}" class="event-image">` : ''}
                         <h3>${e.title}</h3>
                         <p>📍 ${e.location}</p>
@@ -159,44 +176,30 @@
                             <a href="https://line.me/R/msg/text/?${encodeURIComponent(e.title)}" target="_blank" class="line-button">💬 LINE</a>
                         </div>
                     </div>
-                `).join('') || '<p>該当なし</p>';
-            } catch (e) {
-                console.error(e);
+                `}).join('') || '<p>該当なし</p>';
+
+                // お気に入りボタンのイベント登録
+                listContainer.querySelectorAll('.favorite-button').forEach(btn => {
+                    btn.onclick = async () => {
+                        const id = btn.dataset.id;
+                        const dId = `${auth.currentUser.uid}_${id}`;
+                        if (favIds.has(id)) {
+                            await deleteDoc(doc(db, "favorites", dId));
+                            favIds.delete(id);
+                        } else {
+                            await setDoc(doc(db, "favorites", dId), { userId: auth.currentUser.uid, eventId: id, createdAt: serverTimestamp() });
+                            favIds.add(id);
+                        }
+                        load();
+                    };
+                });
+
+            } catch (err) {
+                console.error(err);
                 document.getElementById('events-list').innerHTML = "エラーが発生しました";
             }
         }
 
-        window.toggleFav = async (id) => {
-            const dId = `${auth.currentUser.uid}_${id}`;
-            if (favIds.has(id)) {
-                await deleteDoc(doc(db, "favorites", dId));
-                favIds.delete(id);
-            } else {
-                await setDoc(doc(db, "favorites", dId), { userId: auth.currentUser.uid, eventId: id, createdAt: serverTimestamp() });
-                favIds.add(id);
-            }
-            load();
-        };
-
+        // 認証管理
         onAuthStateChanged(auth, async (user) => {
-            const status = document.getElementById('user-status');
-            if (user) {
-                status.textContent = user.displayName;
-                document.getElementById('logout-button').style.display = 'inline-block';
-                document.getElementById('login-button').style.display = 'none';
-                const fSnap = await getDocs(query(collection(db, "favorites"), where("userId", "==", user.uid)));
-                favIds = new Set(fSnap.docs.map(d => d.data().eventId));
-            } else {
-                status.textContent = '未ログイン';
-                document.getElementById('logout-button').style.display = 'none';
-                document.getElementById('login-button').style.display = 'inline-block';
-            }
-            load();
-        });
-
-        document.getElementById('login-button').onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
-        document.getElementById('logout-button').onclick = () => signOut(auth);
-        document.getElementById('search-button').onclick = () => load();
-    </script>
-</body>
-</html>
+            const status = document.getElementById('user
