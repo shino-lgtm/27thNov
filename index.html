@@ -4,9 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>イベントリスト - My Firestore App</title>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
     <style>
         body { font-family: sans-serif; margin: 0; padding: 0; background-color: #f4f7f6; color: #333; }
-        .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
         h1 { color: #00A3A0; text-align: center; margin: 20px 0; }
         #fixed-header { position: sticky; top: 0; z-index: 1000; background: white; padding: 10px 20px; border-bottom: 1px solid #ddd; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         #auth-ui { text-align: right; margin-bottom: 10px; }
@@ -18,36 +19,49 @@
         #search-controls { display: flex; gap: 10px; margin: 10px 0; }
         #search-input { flex-grow: 1; padding: 8px; border-radius: 20px; border: 1px solid #ddd; }
         #tag-list { padding: 10px 0; overflow-x: auto; white-space: nowrap; }
-        .tag-button { background: white; margin-right: 5px; border-radius: 15px; padding: 5px 10px; }
+        .tag-button { background: white; margin-right: 5px; border-radius: 15px; padding: 5px 10px; border: 1px solid #ddd; font-size: 0.85em;}
         .tag-button.active { background: #0ABAB5; color: white; }
-        
-        #events-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
-        .event-card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: relative; display: flex; flex-direction: column; }
-        .event-image { width: 100%; height: 180px; object-fit: cover; border-radius: 8px; margin-bottom: 10px; }
-        .favorite-button { position: absolute; top: 10px; right: 10px; cursor: pointer; font-size: 20px; background: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        
-        /* ★日付の色分けスタイル★ */
-        .date-text.holiday { color: #ea4335; font-weight: bold; }
 
-        /* ★ボタンのデザイン（塗りつぶし版）★ */
-        .action-buttons { display: flex; gap: 8px; margin-top: 10px; }
-        .calendar-button, .line-button { 
-            flex: 1; font-size: 0.75em; padding: 10px 5px; text-decoration: none; text-align: center; border-radius: 20px; font-weight: bold; transition: 0.2s; color: white !important;
+        /* レイアウト: リスト主役、カレンダー脇役 */
+        .main-content { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
+        #events-list { flex: 1; min-width: 300px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        
+        /* ★極小カレンダー設定★ */
+        #calendar-view { 
+            width: 250px; 
+            background: white; 
+            padding: 10px; 
+            border-radius: 12px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+            position: sticky; 
+            top: 150px;
         }
-        .calendar-button { background: #4285F4; border: 1px solid #4285F4; }
-        .line-button { background: #06C755; border: 1px solid #06C755; }
-        .calendar-button:hover { background: #3367d6; opacity: 0.9; }
-        .line-button:hover { background: #05a346; opacity: 0.9; }
+        #calendar { font-size: 10px; } /* 文字をさらに小さく */
+        .fc .fc-toolbar-title { font-size: 1em !important; }
+        .fc .fc-button { padding: 1px 4px !important; font-size: 0.8em !important; }
+        .fc-daygrid-day-number { padding: 1px !important; }
 
-        #social-feed-section { margin-top: 30px; padding: 20px; background: white; border-radius: 12px; text-align: center; }
+        .event-card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: relative; display: flex; flex-direction: column; }
+        .event-image { width: 100%; height: 160px; object-fit: cover; border-radius: 8px; margin-bottom: 10px; }
+        .favorite-button { position: absolute; top: 10px; right: 10px; cursor: pointer; font-size: 20px; background: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; z-index: 10; }
+        
+        .action-buttons { display: flex; gap: 5px; margin-top: auto; flex-wrap: wrap; }
+        .calendar-button, .line-button, .mail-button { 
+            flex: 1; font-size: 0.65em; padding: 8px 2px; text-decoration: none; text-align: center; border-radius: 20px; font-weight: bold; color: white; border: none;
+        }
+        .calendar-button { background: #4285F4; }
+        .mail-button { background: #EA4335; }
+        .line-button { background: #06C755; }
+
+        @media (max-width: 600px) {
+            #calendar-view { width: 100%; position: static; order: -1; } /* スマホではカレンダーを上に */
+        }
     </style>
 </head>
 <body>
     <div id="fixed-header">
         <div class="container">
             <div id="auth-ui">
-                <button id="all-events-button" class="view-active">イベント一覧</button>
-                <button id="mypage-button">お気に入り</button>
                 <span id="user-status">読み込み中...</span>
                 <button id="login-button">ログイン</button>
                 <button id="logout-button" style="display:none;">ログアウト</button>
@@ -56,23 +70,19 @@
             <div id="search-controls">
                 <input type="text" id="search-input" placeholder="検索...">
                 <button id="search-button">検索</button>
-                <button id="clear-button">クリア</button>
             </div>
             <div id="tag-list"></div>
         </div>
     </div>
 
     <div class="container">
-        <div id="events-list"></div>
-        <div id="social-feed-section">
-            <h2>Instagram Feed</h2>
-            <div id="embed-widget-container">
-                <div class="sk-ww-instagram-hashtag-feed" data-embed-id="25633990"></div>
+        <div class="main-content">
+            <div id="events-list">読み込み中...</div>
+            <div id="calendar-view">
+                <div id="calendar"></div>
             </div>
         </div>
     </div>
-
-    <script src="https://widgets.sociablekit.com/instagram-hashtag-feed/widget.js" defer></script>
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
@@ -92,32 +102,101 @@
         const db = getFirestore(app);
         const auth = getAuth(app);
 
-        const eventsList = document.getElementById('events-list');
-        const searchInput = document.getElementById('search-input');
-        const tagList = document.getElementById('tag-list');
-        const userStatus = document.getElementById('user-status');
-
         let allEvents = [];
         let favIds = new Set();
-        let currentView = 'all';
         let currentTag = '';
+
+        function initCalendar(events) {
+            const calendarEl = document.getElementById('calendar');
+            const calendarEvents = events.map(e => {
+                const d = e.date?.toDate ? e.date.toDate() : new Date(e.date);
+                return {
+                    title: e.title,
+                    start: d.toISOString().split('T')[0],
+                    backgroundColor: '#00A3A0'
+                };
+            });
+
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'ja',
+                height: 'auto',
+                events: calendarEvents,
+                headerToolbar: { left: 'prev', center: 'title', right: 'next' }
+            });
+            calendar.render();
+        }
+
+        async function load() {
+            try {
+                if (allEvents.length === 0) {
+                    const snapshot = await getDocs(query(collection(db, "events"), orderBy("date", "asc")));
+                    allEvents = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                    initCalendar(allEvents);
+                    
+                    const tags = new Set();
+                    allEvents.forEach(e => (Array.isArray(e.tags) ? e.tags : (e.tags||'').split(',')).forEach(t => t.trim() && tags.add(t.trim())));
+                    document.getElementById('tag-list').innerHTML = `<button class="tag-button active" id="tag-all">全て</button>` + 
+                        Array.from(tags).map(t => `<button class="tag-button" data-tag="${t}">${t}</button>`).join('');
+                }
+
+                const key = document.getElementById('search-input').value.toLowerCase();
+                const filtered = allEvents.filter(e => {
+                    if (currentTag && !(e.tags||'').includes(currentTag)) return false;
+                    if (key && !(e.title+e.location).toLowerCase().includes(key)) return false;
+                    return true;
+                });
+
+                document.getElementById('events-list').innerHTML = filtered.map(e => `
+                    <div class="event-card">
+                        ${auth.currentUser ? `<div class="favorite-button" onclick="toggleFav('${e.id}')">${favIds.has(e.id)?'❤️':'🤍'}</div>` : ''}
+                        ${e.imageUrl ? `<img src="${e.imageUrl}" class="event-image">` : ''}
+                        <h3>${e.title}</h3>
+                        <p>📍 ${e.location}</p>
+                        <div class="action-buttons">
+                            <a href="https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(e.title)}" target="_blank" class="calendar-button">📅 登録</a>
+                            <a href="https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(e.title)}&body=${encodeURIComponent(window.location.href)}" target="_blank" class="mail-button">📧 Gmail</a>
+                            <a href="https://line.me/R/msg/text/?${encodeURIComponent(e.title)}" target="_blank" class="line-button">💬 LINE</a>
+                        </div>
+                    </div>
+                `).join('') || '<p>該当なし</p>';
+            } catch (e) {
+                console.error(e);
+                document.getElementById('events-list').innerHTML = "エラーが発生しました";
+            }
+        }
+
+        window.toggleFav = async (id) => {
+            const dId = `${auth.currentUser.uid}_${id}`;
+            if (favIds.has(id)) {
+                await deleteDoc(doc(db, "favorites", dId));
+                favIds.delete(id);
+            } else {
+                await setDoc(doc(db, "favorites", dId), { userId: auth.currentUser.uid, eventId: id, createdAt: serverTimestamp() });
+                favIds.add(id);
+            }
+            load();
+        };
+
+        onAuthStateChanged(auth, async (user) => {
+            const status = document.getElementById('user-status');
+            if (user) {
+                status.textContent = user.displayName;
+                document.getElementById('logout-button').style.display = 'inline-block';
+                document.getElementById('login-button').style.display = 'none';
+                const fSnap = await getDocs(query(collection(db, "favorites"), where("userId", "==", user.uid)));
+                favIds = new Set(fSnap.docs.map(d => d.data().eventId));
+            } else {
+                status.textContent = '未ログイン';
+                document.getElementById('logout-button').style.display = 'none';
+                document.getElementById('login-button').style.display = 'inline-block';
+            }
+            load();
+        });
 
         document.getElementById('login-button').onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
         document.getElementById('logout-button').onclick = () => signOut(auth);
         document.getElementById('search-button').onclick = () => load();
-        document.getElementById('clear-button').onclick = () => { searchInput.value = ''; currentTag = ''; load(); };
-        document.getElementById('all-events-button').onclick = () => { currentView = 'all'; updateViewBtn(); load(); };
-        document.getElementById('mypage-button').onclick = () => { currentView = 'favorites'; updateViewBtn(); load(); };
-
-        function updateViewBtn() {
-            document.getElementById('all-events-button').className = currentView === 'all' ? 'view-active' : '';
-            document.getElementById('mypage-button').className = currentView === 'favorites' ? 'view-active' : '';
-        }
-
-        function createCalendarUrl(e) {
-            const title = encodeURIComponent(e.title || 'イベント');
-            const location = encodeURIComponent(e.location || '');
-            const details = encodeURIComponent(e.description || '');
-            let dateStr = "20241127";
-            if (e.date) {
-                const d = e.date.toDate ?
+    </script>
+</body>
+</html>
