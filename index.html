@@ -26,18 +26,18 @@
         .event-image { width: 100%; height: 180px; object-fit: cover; border-radius: 8px; margin-bottom: 10px; }
         .favorite-button { position: absolute; top: 10px; right: 10px; cursor: pointer; font-size: 20px; background: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         
-        /* 日付の色分け用スタイル */
-        .date-text.holiday { color: #ea4335; font-weight: bold; } /* 土日の色 */
+        /* ★日付の色分けスタイル★ */
+        .date-text.holiday { color: #ea4335; font-weight: bold; }
 
-        /* ボタンのデザイン（塗りつぶし） */
-        .action-buttons { display: flex; gap: 5px; margin-top: auto; }
+        /* ★ボタンのデザイン（塗りつぶし版）★ */
+        .action-buttons { display: flex; gap: 8px; margin-top: 10px; }
         .calendar-button, .line-button { 
-            flex: 1; font-size: 0.7em; padding: 8px 2px; text-decoration: none; text-align: center; border-radius: 20px; font-weight: bold; transition: 0.2s; color: white;
+            flex: 1; font-size: 0.75em; padding: 10px 5px; text-decoration: none; text-align: center; border-radius: 20px; font-weight: bold; transition: 0.2s; color: white !important;
         }
         .calendar-button { background: #4285F4; border: 1px solid #4285F4; }
         .line-button { background: #06C755; border: 1px solid #06C755; }
-        .calendar-button:hover { background: #3367d6; }
-        .line-button:hover { background: #05a346; }
+        .calendar-button:hover { background: #3367d6; opacity: 0.9; }
+        .line-button:hover { background: #05a346; opacity: 0.9; }
 
         #social-feed-section { margin-top: 30px; padding: 20px; background: white; border-radius: 12px; text-align: center; }
     </style>
@@ -75,7 +75,6 @@
     <script src="https://widgets.sociablekit.com/instagram-hashtag-feed/widget.js" defer></script>
 
     <script type="module">
-        // Firebase初期化などのスクリプト部分は省略なしで記述
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
         import { getFirestore, collection, getDocs, orderBy, query, where, doc, setDoc, deleteDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
@@ -121,97 +120,4 @@
             const details = encodeURIComponent(e.description || '');
             let dateStr = "20241127";
             if (e.date) {
-                const d = e.date.toDate ? e.date.toDate() : new Date(e.date);
-                dateStr = d.toISOString().replace(/-|:|\.\d\d\d/g, "").split('T')[0];
-            }
-            return `https://www.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dateStr}/${dateStr}&details=${details}&location=${location}`;
-        }
-
-        function createLineUrl(e) {
-            const text = encodeURIComponent(`【おすすめ】\n${e.title}\n📍${e.location}\n${window.location.href}`);
-            return `https://line.me/R/msg/text/?${text}`;
-        }
-
-        async function toggleFav(id) {
-            if (!auth.currentUser) return alert('ログインしてください');
-            const dId = `${auth.currentUser.uid}_${id}`;
-            if (favIds.has(id)) {
-                await deleteDoc(doc(db, "favorites", dId));
-                favIds.delete(id);
-            } else {
-                await setDoc(doc(db, "favorites", dId), { userId: auth.currentUser.uid, eventId: id, createdAt: serverTimestamp() });
-                favIds.add(id);
-            }
-            load();
-        }
-
-        async function load() {
-            if (allEvents.length === 0) {
-                const snapshot = await getDocs(query(collection(db, "events"), orderBy("date", "asc")));
-                allEvents = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-                const tags = new Set();
-                allEvents.forEach(e => (Array.isArray(e.tags) ? e.tags : (e.tags||'').split(',')).forEach(t => t.trim() && tags.add(t.trim())));
-                tagList.innerHTML = `<button class="tag-button ${!currentTag?'active':''}" id="tag-all">全て</button>` + 
-                    Array.from(tags).map(t => `<button class="tag-button ${currentTag===t?'active':''}" data-tag="${t}">${t}</button>`).join('');
-                tagList.onclick = (e) => { 
-                    if(e.target.id === 'tag-all') { currentTag = ''; load(); }
-                    if(e.target.dataset.tag) { currentTag = e.target.dataset.tag; load(); }
-                };
-            }
-
-            const key = searchInput.value.toLowerCase();
-            const filtered = allEvents.filter(e => {
-                if (currentView === 'favorites' && !favIds.has(e.id)) return false;
-                if (currentTag && !(e.tags||'').includes(currentTag)) return false;
-                if (key && !(e.title+e.location).toLowerCase().includes(key)) return false;
-                return true;
-            });
-
-            eventsList.innerHTML = filtered.map(e => {
-                // ★日付の土日判定ロジック★
-                const d = e.date ? (e.date.toDate ? e.date.toDate() : new Date(e.date)) : null;
-                let dateDisplay = "日付未定";
-                let holidayClass = "";
-                if (d) {
-                    const days = ['日', '月', '火', '水', '木', '金', '土'];
-                    const dayName = days[d.getDay()];
-                    dateDisplay = `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} (${dayName})`;
-                    // 土曜日(6) or 日曜日(0) ならクラス付与
-                    if (d.getDay() === 0 || d.getDay() === 6) holidayClass = "holiday";
-                }
-
-                return `
-                <div class="event-card">
-                    ${auth.currentUser ? `<div class="favorite-button" data-id="${e.id}">${favIds.has(e.id)?'❤️':'🤍'}</div>` : ''}
-                    ${e.imageUrl ? `<img src="${e.imageUrl}" class="event-image">` : ''}
-                    <h3>${e.title}</h3>
-                    <p class="date-text ${holidayClass}">🗓 日時: ${dateDisplay}</p>
-                    <p>📍 ${e.location}</p>
-                    <div class="action-buttons">
-                        <a href="${createCalendarUrl(e)}" target="_blank" class="calendar-button">📅 カレンダー</a>
-                        <a href="${createLineUrl(e)}" target="_blank" class="line-button">💬 LINEで送る</a>
-                    </div>
-                </div>
-                `;
-            }).join('') || '<p>該当なし</p>';
-
-            eventsList.querySelectorAll('.favorite-button').forEach(b => b.onclick = () => toggleFav(b.dataset.id));
-        }
-
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                userStatus.textContent = user.displayName;
-                document.getElementById('logout-button').style.display = 'inline-block';
-                document.getElementById('login-button').style.display = 'none';
-                const fSnap = await getDocs(query(collection(db, "favorites"), where("userId", "==", user.uid)));
-                favIds = new Set(fSnap.docs.map(d => d.data().eventId));
-            } else {
-                userStatus.textContent = '未ログイン';
-                document.getElementById('logout-button').style.display = 'none';
-                document.getElementById('login-button').style.display = 'inline-block';
-            }
-            load();
-        });
-    </script>
-</body>
-</html>
+                const d = e.date.toDate ?
