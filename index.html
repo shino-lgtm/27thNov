@@ -24,24 +24,27 @@
         .main-content { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
         #events-list { flex: 1; min-width: 300px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
         
+        /* カレンダー表示エリアの設定 */
         #calendar-view { 
             width: 280px; 
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: sticky; 
+            top: 150px;
+        }
+        .calendar-container {
             background: white; 
             padding: 10px; 
             border-radius: 12px; 
             box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
-            position: sticky; 
-            top: 150px;
         }
-        #calendar { font-size: 11px; }
+        .calendar-box { font-size: 11px; }
 
-        /* --- ★土日を赤・青にするための最強設定★ --- */
-        /* 日曜日: 枠、日付、曜日のすべてを赤に */
+        /* 土日の色設定 */
         .fc .fc-day-sun { background-color: #fff5f5 !important; }
         .fc .fc-day-sun .fc-col-header-cell-cushion,
         .fc .fc-day-sun .fc-daygrid-day-number { color: #EA4335 !important; }
-
-        /* 土曜日: 枠、日付、曜日のすべてを青に */
         .fc .fc-day-sat { background-color: #f5faff !important; }
         .fc .fc-day-sat .fc-col-header-cell-cushion,
         .fc .fc-day-sat .fc-daygrid-day-number { color: #4285F4 !important; }
@@ -84,7 +87,12 @@
         <div class="main-content">
             <div id="events-list">読み込み中...</div>
             <div id="calendar-view">
-                <div id="calendar"></div>
+                <div class="calendar-container">
+                    <div id="calendar-now" class="calendar-box"></div>
+                </div>
+                <div class="calendar-container">
+                    <div id="calendar-next" class="calendar-box"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -112,7 +120,6 @@
         let currentTag = '';
 
         function initCalendar(events) {
-            const calendarEl = document.getElementById('calendar');
             const calendarEvents = events.map(e => {
                 const d = e.date?.toDate ? e.date.toDate() : new Date(e.date);
                 return {
@@ -123,14 +130,29 @@
                 };
             });
 
-            const calendar = new FullCalendar.Calendar(calendarEl, {
+            // 今月
+            const calendarNow = new FullCalendar.Calendar(document.getElementById('calendar-now'), {
                 initialView: 'dayGridMonth',
                 locale: 'ja',
                 height: 'auto',
                 events: calendarEvents,
-                headerToolbar: { left: 'prev', center: 'title', right: 'next' }
+                headerToolbar: { left: '', center: 'title', right: '' }
             });
-            calendar.render();
+
+            // 翌月
+            const nextMonth = new Date();
+            nextMonth.setMonth(nextMonth.getMonth() + 1);
+            const calendarNext = new FullCalendar.Calendar(document.getElementById('calendar-next'), {
+                initialView: 'dayGridMonth',
+                initialDate: nextMonth,
+                locale: 'ja',
+                height: 'auto',
+                events: calendarEvents,
+                headerToolbar: { left: '', center: 'title', right: '' }
+            });
+
+            calendarNow.render();
+            calendarNext.render();
         }
 
         async function load() {
