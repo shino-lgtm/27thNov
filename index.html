@@ -22,48 +22,41 @@
         .tag-button.active { background: #0ABAB5; color: white; }
 
         .main-content { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
-        #events-list { flex: 1; min-width: 300px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        #events-list { flex: 1; min-width: 300px; display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
         
-        /* カレンダー表示エリアの設定 */
-        #calendar-view { 
-            width: 280px; 
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            position: sticky; 
-            top: 150px;
-        }
-        .calendar-container {
-            background: white; 
-            padding: 10px; 
-            border-radius: 12px; 
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
-        }
+        #calendar-view { width: 280px; display: flex; flex-direction: column; gap: 20px; position: sticky; top: 150px; }
+        .calendar-container { background: white; padding: 10px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .calendar-box { font-size: 11px; }
 
-        /* 土日の色設定 */
+        /* カレンダー土日色 */
         .fc .fc-day-sun { background-color: #fff5f5 !important; }
-        .fc .fc-day-sun .fc-col-header-cell-cushion,
-        .fc .fc-day-sun .fc-daygrid-day-number { color: #EA4335 !important; }
+        .fc .fc-day-sun .fc-col-header-cell-cushion, .fc .fc-day-sun .fc-daygrid-day-number { color: #EA4335 !important; }
         .fc .fc-day-sat { background-color: #f5faff !important; }
-        .fc .fc-day-sat .fc-col-header-cell-cushion,
-        .fc .fc-day-sat .fc-daygrid-day-number { color: #4285F4 !important; }
+        .fc .fc-day-sat .fc-col-header-cell-cushion, .fc .fc-day-sat .fc-daygrid-day-number { color: #4285F4 !important; }
 
         .event-card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: relative; display: flex; flex-direction: column; }
         .event-image { width: 100%; height: 160px; object-fit: cover; border-radius: 8px; margin-bottom: 10px; }
         .favorite-button { position: absolute; top: 10px; right: 10px; cursor: pointer; font-size: 20px; background: white; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; z-index: 10; border: 1px solid #eee; }
         
-        .action-buttons { display: flex; gap: 5px; margin-top: auto; }
-        .calendar-button, .line-button, .mail-button { 
-            flex: 1; font-size: 0.65em; padding: 10px 2px; text-decoration: none; text-align: center; border-radius: 20px; font-weight: bold; color: white !important;
-        }
+        .action-buttons { display: flex; gap: 5px; margin-top: 10px; }
+        .calendar-button, .line-button, .mail-button { flex: 1; font-size: 0.65em; padding: 10px 2px; text-decoration: none; text-align: center; border-radius: 20px; font-weight: bold; color: white !important; }
         .calendar-button { background: #4285F4; }
         .mail-button { background: #EA4335; }
         .line-button { background: #06C755; }
 
-        @media (max-width: 600px) {
-            #calendar-view { width: 100%; position: static; order: -1; margin-bottom: 20px; }
-        }
+        /* --- レビュー用スタイル --- */
+        .review-section { margin-top: 15px; border-top: 1px solid #eee; padding-top: 10px; font-size: 0.85em; }
+        .review-form { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
+        .star-input { color: #ddd; font-size: 1.5em; cursor: pointer; display: inline-block; }
+        .star-input.active { color: #ffc107; }
+        .review-input { width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        .review-item { background: #f9f9f9; padding: 8px; border-radius: 8px; margin-bottom: 5px; position: relative; }
+        .review-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 0.8em; color: #666; }
+        .review-stars { color: #ffc107; }
+        .review-text { margin-top: 3px; }
+        .delete-review { color: #ff4d4d; cursor: pointer; font-size: 0.8em; text-decoration: underline; }
+
+        @media (max-width: 600px) { #calendar-view { width: 100%; position: static; order: -1; margin-bottom: 20px; } }
     </style>
 </head>
 <body>
@@ -87,19 +80,15 @@
         <div class="main-content">
             <div id="events-list">読み込み中...</div>
             <div id="calendar-view">
-                <div class="calendar-container">
-                    <div id="calendar-now" class="calendar-box"></div>
-                </div>
-                <div class="calendar-container">
-                    <div id="calendar-next" class="calendar-box"></div>
-                </div>
+                <div class="calendar-container"><div id="calendar-now" class="calendar-box"></div></div>
+                <div class="calendar-container"><div id="calendar-next" class="calendar-box"></div></div>
             </div>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-        import { getFirestore, collection, getDocs, orderBy, query, where, doc, setDoc, deleteDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+        import { getFirestore, collection, addDoc, getDocs, orderBy, query, where, doc, setDoc, deleteDoc, serverTimestamp, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
         const firebaseConfig = {
@@ -122,100 +111,141 @@
         function initCalendar(events) {
             const calendarEvents = events.map(e => {
                 const d = e.date?.toDate ? e.date.toDate() : new Date(e.date);
-                return {
-                    title: e.title,
-                    start: d.toISOString().split('T')[0],
-                    backgroundColor: '#00A3A0',
-                    borderColor: '#00A3A0'
-                };
+                return { title: e.title, start: d.toISOString().split('T')[0], backgroundColor: '#00A3A0', borderColor: '#00A3A0' };
             });
-
-            // 今月
-            const calendarNow = new FullCalendar.Calendar(document.getElementById('calendar-now'), {
-                initialView: 'dayGridMonth',
-                locale: 'ja',
-                height: 'auto',
-                events: calendarEvents,
-                headerToolbar: { left: '', center: 'title', right: '' }
+            const cNow = new FullCalendar.Calendar(document.getElementById('calendar-now'), {
+                initialView: 'dayGridMonth', locale: 'ja', height: 'auto', events: calendarEvents, headerToolbar: { left: '', center: 'title', right: '' }
             });
-
-            // 翌月
-            const nextMonth = new Date();
-            nextMonth.setMonth(nextMonth.getMonth() + 1);
-            const calendarNext = new FullCalendar.Calendar(document.getElementById('calendar-next'), {
-                initialView: 'dayGridMonth',
-                initialDate: nextMonth,
-                locale: 'ja',
-                height: 'auto',
-                events: calendarEvents,
-                headerToolbar: { left: '', center: 'title', right: '' }
+            const nextMonth = new Date(); nextMonth.setMonth(nextMonth.getMonth() + 1);
+            const cNext = new FullCalendar.Calendar(document.getElementById('calendar-next'), {
+                initialView: 'dayGridMonth', initialDate: nextMonth, locale: 'ja', height: 'auto', events: calendarEvents, headerToolbar: { left: '', center: 'title', right: '' }
             });
+            cNow.render(); cNext.render();
+        }
 
-            calendarNow.render();
-            calendarNext.render();
+        async function postReview(eventId, rating, comment) {
+            if (!auth.currentUser) return alert("ログインが必要です");
+            await addDoc(collection(db, "reviews"), {
+                eventId, rating, comment, userId: auth.currentUser.uid, userName: auth.currentUser.displayName, createdAt: serverTimestamp()
+            });
+        }
+
+        async function deleteReview(reviewId) {
+            if (confirm("レビューを削除しますか？")) {
+                await deleteDoc(doc(db, "reviews", reviewId));
+            }
+        }
+
+        function setupReviewListener(eventId, containerId) {
+            const q = query(collection(db, "reviews"), where("eventId", "==", eventId), orderBy("createdAt", "desc"));
+            onSnapshot(q, (snapshot) => {
+                const container = document.getElementById(containerId);
+                if (!container) return;
+                const reviews = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
+                container.innerHTML = reviews.map(r => `
+                    <div class="review-item">
+                        <div class="review-header">
+                            <span>👤 ${r.userName}</span>
+                            <span class="review-stars">${'⭐'.repeat(r.rating)}</span>
+                        </div>
+                        <div class="review-text">${r.comment}</div>
+                        ${auth.currentUser && auth.currentUser.uid === r.userId ? `<span class="delete-review" onclick="window.delRev('${r.id}')">削除</span>` : ''}
+                    </div>
+                `).join('');
+            });
         }
 
         async function load() {
-            try {
-                if (allEvents.length === 0) {
-                    const snapshot = await getDocs(query(collection(db, "events"), orderBy("date", "asc")));
-                    allEvents = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-                    initCalendar(allEvents);
-                    
-                    const tags = new Set();
-                    allEvents.forEach(e => (Array.isArray(e.tags) ? e.tags : (e.tags||'').split(',')).forEach(t => t.trim() && tags.add(t.trim())));
-                    const tagList = document.getElementById('tag-list');
-                    tagList.innerHTML = `<button class="tag-button active" id="tag-all">全て</button>` + 
-                        Array.from(tags).map(t => `<button class="tag-button" data-tag="${t}">${t}</button>`).join('');
-                    
-                    tagList.onclick = (e) => {
-                        if (e.target.tagName !== 'BUTTON') return;
-                        currentTag = e.target.dataset.tag || '';
-                        Array.from(tagList.children).forEach(btn => btn.classList.toggle('active', btn === e.target));
-                        load();
-                    };
-                }
+            if (allEvents.length === 0) {
+                const snapshot = await getDocs(query(collection(db, "events"), orderBy("date", "asc")));
+                allEvents = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                initCalendar(allEvents);
+                const tags = new Set();
+                allEvents.forEach(e => (Array.isArray(e.tags) ? e.tags : (e.tags||'').split(',')).forEach(t => t.trim() && tags.add(t.trim())));
+                const tagList = document.getElementById('tag-list');
+                tagList.innerHTML = `<button class="tag-button active" id="tag-all">全て</button>` + Array.from(tags).map(t => `<button class="tag-button" data-tag="${t}">${t}</button>`).join('');
+                tagList.onclick = (e) => {
+                    if (e.target.tagName !== 'BUTTON') return;
+                    currentTag = e.target.dataset.tag || '';
+                    Array.from(tagList.children).forEach(btn => btn.classList.toggle('active', btn === e.target));
+                    load();
+                };
+            }
 
-                const key = document.getElementById('search-input').value.toLowerCase();
-                const filtered = allEvents.filter(e => {
-                    if (currentTag && !(e.tags||'').includes(currentTag)) return false;
-                    if (key && !(e.title+e.location).toLowerCase().includes(key)) return false;
-                    return true;
-                });
+            const key = document.getElementById('search-input').value.toLowerCase();
+            const filtered = allEvents.filter(e => {
+                if (currentTag && !(e.tags||'').includes(currentTag)) return false;
+                if (key && !(e.title+e.location).toLowerCase().includes(key)) return false;
+                return true;
+            });
 
-                const listContainer = document.getElementById('events-list');
-                listContainer.innerHTML = filtered.map(e => {
-                    const isFav = favIds.has(e.id);
-                    return `
-                    <div class="event-card">
-                        ${auth.currentUser ? `<div class="favorite-button" data-id="${e.id}">${isFav ? '❤️' : '🤍'}</div>` : ''}
-                        ${e.imageUrl ? `<img src="${e.imageUrl}" class="event-image">` : ''}
-                        <h3>${e.title}</h3>
-                        <p>📍 ${e.location}</p>
-                        <div class="action-buttons">
-                            <a href="https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(e.title)}" target="_blank" class="calendar-button">📅 登録</a>
-                            <a href="https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(e.title)}&body=${encodeURIComponent(window.location.href)}" target="_blank" class="mail-button">📧 Gmail</a>
-                            <a href="https://line.me/R/msg/text/?${encodeURIComponent(e.title)}" target="_blank" class="line-button">💬 LINE</a>
-                        </div>
+            const listContainer = document.getElementById('events-list');
+            listContainer.innerHTML = filtered.map(e => `
+                <div class="event-card">
+                    ${auth.currentUser ? `<div class="favorite-button" data-id="${e.id}">${favIds.has(e.id)?'❤️':'🤍'}</div>` : ''}
+                    ${e.imageUrl ? `<img src="${e.imageUrl}" class="event-image">` : ''}
+                    <h3>${e.title}</h3>
+                    <p>📍 ${e.location}</p>
+                    <div class="action-buttons">
+                        <a href="https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(e.title)}" target="_blank" class="calendar-button">📅 登録</a>
+                        <a href="https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(e.title)}&body=${encodeURIComponent(window.location.href)}" target="_blank" class="mail-button">📧 Gmail</a>
+                        <a href="https://line.me/R/msg/text/?${encodeURIComponent(e.title)}" target="_blank" class="line-button">💬 LINE</a>
                     </div>
-                `}).join('') || '<p>該当なし</p>';
+                    
+                    <div class="review-section">
+                        <h4>レビュー ⭐</h4>
+                        ${auth.currentUser ? `
+                            <div class="review-form">
+                                <div class="star-selector" data-event-id="${e.id}">
+                                    <span class="star-input" data-val="1">★</span><span class="star-input" data-val="2">★</span><span class="star-input" data-val="3">★</span><span class="star-input" data-val="4">★</span><span class="star-input" data-val="5">★</span>
+                                </div>
+                                <input type="text" class="review-input" placeholder="感想を入力..." id="input-${e.id}">
+                                <button onclick="window.sendReview('${e.id}')">投稿</button>
+                            </div>
+                        ` : '<p style="font-size:0.8em; color:gray;">ログインするとレビューを書けます</p>'}
+                        <div id="reviews-list-${e.id}"></div>
+                    </div>
+                </div>
+            `).join('') || '<p>該当なし</p>';
 
-                listContainer.querySelectorAll('.favorite-button').forEach(btn => {
-                    btn.onclick = async () => {
-                        const id = btn.dataset.id;
-                        const dId = `${auth.currentUser.uid}_${id}`;
-                        if (favIds.has(id)) {
-                            await deleteDoc(doc(db, "favorites", dId));
-                            favIds.delete(id);
-                        } else {
-                            await setDoc(doc(db, "favorites", dId), { userId: auth.currentUser.uid, eventId: id, createdAt: serverTimestamp() });
-                            favIds.add(id);
-                        }
-                        load();
+            // お気に入りボタン設定
+            listContainer.querySelectorAll('.favorite-button').forEach(btn => {
+                btn.onclick = async () => {
+                    const id = btn.dataset.id;
+                    const dId = `${auth.currentUser.uid}_${id}`;
+                    if (favIds.has(id)) { await deleteDoc(doc(db, "favorites", dId)); favIds.delete(id); }
+                    else { await setDoc(doc(db, "favorites", dId), { userId: auth.currentUser.uid, eventId: id, createdAt: serverTimestamp() }); favIds.add(id); }
+                    load();
+                };
+            });
+
+            // 星評価の選択ロジック
+            listContainer.querySelectorAll('.star-selector').forEach(sel => {
+                let currentRating = 0;
+                const stars = sel.querySelectorAll('.star-input');
+                stars.forEach(star => {
+                    star.onclick = () => {
+                        currentRating = star.dataset.val;
+                        stars.forEach(s => s.classList.toggle('active', s.dataset.val <= currentRating));
+                        sel.dataset.rating = currentRating;
                     };
                 });
-            } catch (err) { console.error(err); }
+            });
+
+            // 各イベントのレビューリスナーをセット
+            filtered.forEach(e => setupReviewListener(e.id, `reviews-list-${e.id}`));
         }
+
+        // グローバルに関数を公開（HTML内のonclick用）
+        window.sendReview = async (eventId) => {
+            const input = document.getElementById(`input-${eventId}`);
+            const rating = document.querySelector(`.star-selector[data-event-id="${eventId}"]`).dataset.rating || 0;
+            if (rating == 0) return alert("星評価を選んでください");
+            if (!input.value.trim()) return alert("コメントを入力してください");
+            await postReview(eventId, parseInt(rating), input.value);
+            input.value = "";
+        };
+        window.delRev = async (id) => await deleteReview(id);
 
         onAuthStateChanged(auth, async (user) => {
             const status = document.getElementById('user-status');
