@@ -28,7 +28,6 @@
         .calendar-container { background: white; padding: 10px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .calendar-box { font-size: 11px; }
 
-        /* カレンダー土日色 */
         .fc .fc-day-sun { background-color: #fff5f5 !important; }
         .fc .fc-day-sun .fc-col-header-cell-cushion, .fc .fc-day-sun .fc-daygrid-day-number { color: #EA4335 !important; }
         .fc .fc-day-sat { background-color: #f5faff !important; }
@@ -44,17 +43,17 @@
         .mail-button { background: #EA4335; }
         .line-button { background: #06C755; }
 
-        /* --- レビュー用スタイル --- */
+        /* レビュー用スタイル */
         .review-section { margin-top: 15px; border-top: 1px solid #eee; padding-top: 10px; font-size: 0.85em; }
-        .review-form { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
+        .review-form { background: #f0fdfc; padding: 10px; border-radius: 8px; margin-bottom: 10px; }
         .star-input { color: #ddd; font-size: 1.5em; cursor: pointer; display: inline-block; }
         .star-input.active { color: #ffc107; }
-        .review-input { width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
-        .review-item { background: #f9f9f9; padding: 8px; border-radius: 8px; margin-bottom: 5px; position: relative; }
-        .review-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 0.8em; color: #666; }
+        .review-input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px; margin: 5px 0; box-sizing: border-box; }
+        .post-btn { background: #00A3A0; color: white; border: none; padding: 5px 15px; border-radius: 15px; width: 100%; margin-top: 5px; }
+        .review-item { border-bottom: 1px solid #eee; padding: 8px 0; }
+        .review-header { display: flex; justify-content: space-between; font-weight: bold; }
         .review-stars { color: #ffc107; }
-        .review-text { margin-top: 3px; }
-        .delete-review { color: #ff4d4d; cursor: pointer; font-size: 0.8em; text-decoration: underline; }
+        .del-rev-btn { color: #ff4d4d; cursor: pointer; margin-left: 10px; font-size: 0.8em; }
 
         @media (max-width: 600px) { #calendar-view { width: 100%; position: static; order: -1; margin-bottom: 20px; } }
     </style>
@@ -88,7 +87,7 @@
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-        import { getFirestore, collection, addDoc, getDocs, orderBy, query, where, doc, setDoc, deleteDoc, serverTimestamp, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+        import { getFirestore, collection, addDoc, getDocs, orderBy, query, where, doc, deleteDoc, serverTimestamp, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
         const firebaseConfig = {
@@ -113,46 +112,10 @@
                 const d = e.date?.toDate ? e.date.toDate() : new Date(e.date);
                 return { title: e.title, start: d.toISOString().split('T')[0], backgroundColor: '#00A3A0', borderColor: '#00A3A0' };
             });
-            const cNow = new FullCalendar.Calendar(document.getElementById('calendar-now'), {
-                initialView: 'dayGridMonth', locale: 'ja', height: 'auto', events: calendarEvents, headerToolbar: { left: '', center: 'title', right: '' }
-            });
+            const cNow = new FullCalendar.Calendar(document.getElementById('calendar-now'), { initialView: 'dayGridMonth', locale: 'ja', height: 'auto', events: calendarEvents, headerToolbar: { left: '', center: 'title', right: '' } });
             const nextMonth = new Date(); nextMonth.setMonth(nextMonth.getMonth() + 1);
-            const cNext = new FullCalendar.Calendar(document.getElementById('calendar-next'), {
-                initialView: 'dayGridMonth', initialDate: nextMonth, locale: 'ja', height: 'auto', events: calendarEvents, headerToolbar: { left: '', center: 'title', right: '' }
-            });
+            const cNext = new FullCalendar.Calendar(document.getElementById('calendar-next'), { initialView: 'dayGridMonth', initialDate: nextMonth, locale: 'ja', height: 'auto', events: calendarEvents, headerToolbar: { left: '', center: 'title', right: '' } });
             cNow.render(); cNext.render();
-        }
-
-        async function postReview(eventId, rating, comment) {
-            if (!auth.currentUser) return alert("ログインが必要です");
-            await addDoc(collection(db, "reviews"), {
-                eventId, rating, comment, userId: auth.currentUser.uid, userName: auth.currentUser.displayName, createdAt: serverTimestamp()
-            });
-        }
-
-        async function deleteReview(reviewId) {
-            if (confirm("レビューを削除しますか？")) {
-                await deleteDoc(doc(db, "reviews", reviewId));
-            }
-        }
-
-        function setupReviewListener(eventId, containerId) {
-            const q = query(collection(db, "reviews"), where("eventId", "==", eventId), orderBy("createdAt", "desc"));
-            onSnapshot(q, (snapshot) => {
-                const container = document.getElementById(containerId);
-                if (!container) return;
-                const reviews = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
-                container.innerHTML = reviews.map(r => `
-                    <div class="review-item">
-                        <div class="review-header">
-                            <span>👤 ${r.userName}</span>
-                            <span class="review-stars">${'⭐'.repeat(r.rating)}</span>
-                        </div>
-                        <div class="review-text">${r.comment}</div>
-                        ${auth.currentUser && auth.currentUser.uid === r.userId ? `<span class="delete-review" onclick="window.delRev('${r.id}')">削除</span>` : ''}
-                    </div>
-                `).join('');
-            });
         }
 
         async function load() {
@@ -196,56 +159,70 @@
                         <h4>レビュー ⭐</h4>
                         ${auth.currentUser ? `
                             <div class="review-form">
-                                <div class="star-selector" data-event-id="${e.id}">
-                                    <span class="star-input" data-val="1">★</span><span class="star-input" data-val="2">★</span><span class="star-input" data-val="3">★</span><span class="star-input" data-val="4">★</span><span class="star-input" data-val="5">★</span>
+                                <div class="star-group" id="stars-${e.id}">
+                                    <span class="star-input" data-v="1">★</span><span class="star-input" data-v="2">★</span><span class="star-input" data-v="3">★</span><span class="star-input" data-v="4">★</span><span class="star-input" data-v="5">★</span>
                                 </div>
-                                <input type="text" class="review-input" placeholder="感想を入力..." id="input-${e.id}">
-                                <button onclick="window.sendReview('${e.id}')">投稿</button>
+                                <input type="text" class="review-input" id="text-${e.id}" placeholder="コメントを書く...">
+                                <button class="post-btn" data-eid="${e.id}">投稿する</button>
                             </div>
-                        ` : '<p style="font-size:0.8em; color:gray;">ログインするとレビューを書けます</p>'}
-                        <div id="reviews-list-${e.id}"></div>
+                        ` : '<p style="color:gray; font-size:0.8em;">ログインするとレビューを投稿できます</p>'}
+                        <div id="list-${e.id}">読み込み中...</div>
                     </div>
                 </div>
             `).join('') || '<p>該当なし</p>';
 
-            // お気に入りボタン設定
-            listContainer.querySelectorAll('.favorite-button').forEach(btn => {
-                btn.onclick = async () => {
-                    const id = btn.dataset.id;
-                    const dId = `${auth.currentUser.uid}_${id}`;
-                    if (favIds.has(id)) { await deleteDoc(doc(db, "favorites", dId)); favIds.delete(id); }
-                    else { await setDoc(doc(db, "favorites", dId), { userId: auth.currentUser.uid, eventId: id, createdAt: serverTimestamp() }); favIds.add(id); }
-                    load();
-                };
-            });
+            // 各イベントごとのボタン制御
+            filtered.forEach(e => {
+                const card = listContainer.querySelector(`[data-eid="${e.id}"]`)?.parentElement.parentElement.parentElement;
+                if (!card) return;
 
-            // 星評価の選択ロジック
-            listContainer.querySelectorAll('.star-selector').forEach(sel => {
-                let currentRating = 0;
-                const stars = sel.querySelectorAll('.star-input');
-                stars.forEach(star => {
-                    star.onclick = () => {
-                        currentRating = star.dataset.val;
-                        stars.forEach(s => s.classList.toggle('active', s.dataset.val <= currentRating));
-                        sel.dataset.rating = currentRating;
-                    };
+                // レビューリアルタイム表示設定
+                const q = query(collection(db, "reviews"), where("eventId", "==", e.id), orderBy("createdAt", "desc"));
+                onSnapshot(q, (sn) => {
+                    const list = document.getElementById(`list-${e.id}`);
+                    if (!list) return;
+                    list.innerHTML = sn.docs.map(doc => {
+                        const r = doc.data();
+                        return `
+                        <div class="review-item">
+                            <div class="review-header">
+                                <span>👤 ${r.userName}</span>
+                                <span class="review-stars">${'★'.repeat(r.rating)}</span>
+                            </div>
+                            <div>${r.comment}</div>
+                            ${auth.currentUser && auth.currentUser.uid === r.userId ? `<span class="del-rev-btn" data-rid="${doc.id}">削除</span>` : ''}
+                        </div>`;
+                    }).join('') || '<p style="color:#ccc;">まだレビューはありません</p>';
+                    
+                    // 削除ボタンイベント
+                    list.querySelectorAll('.del-rev-btn').forEach(b => b.onclick = () => deleteDoc(doc(db, "reviews", b.dataset.rid)));
                 });
+
+                // 星評価のクリック
+                const stars = card.querySelectorAll('.star-input');
+                let selectedRating = 0;
+                stars.forEach(s => s.onclick = () => {
+                    selectedRating = s.dataset.v;
+                    stars.forEach(st => st.classList.toggle('active', st.dataset.v <= selectedRating));
+                });
+
+                // 投稿ボタンクリック
+                const postBtn = card.querySelector('.post-btn');
+                if (postBtn) {
+                    postBtn.onclick = async () => {
+                        const txt = document.getElementById(`text-${e.id}`).value;
+                        if (!selectedRating || !txt) return alert("星とコメントを入力してください");
+                        await addDoc(collection(db, "reviews"), {
+                            eventId: e.id, rating: parseInt(selectedRating), comment: txt, 
+                            userId: auth.currentUser.uid, userName: auth.currentUser.displayName, createdAt: serverTimestamp()
+                        });
+                        document.getElementById(`text-${e.id}`).value = "";
+                        selectedRating = 0;
+                        stars.forEach(st => st.classList.remove('active'));
+                    };
+                }
             });
-
-            // 各イベントのレビューリスナーをセット
-            filtered.forEach(e => setupReviewListener(e.id, `reviews-list-${e.id}`));
         }
-
-        // グローバルに関数を公開（HTML内のonclick用）
-        window.sendReview = async (eventId) => {
-            const input = document.getElementById(`input-${eventId}`);
-            const rating = document.querySelector(`.star-selector[data-event-id="${eventId}"]`).dataset.rating || 0;
-            if (rating == 0) return alert("星評価を選んでください");
-            if (!input.value.trim()) return alert("コメントを入力してください");
-            await postReview(eventId, parseInt(rating), input.value);
-            input.value = "";
-        };
-        window.delRev = async (id) => await deleteReview(id);
 
         onAuthStateChanged(auth, async (user) => {
             const status = document.getElementById('user-status');
@@ -253,8 +230,6 @@
                 status.textContent = user.displayName;
                 document.getElementById('logout-button').style.display = 'inline-block';
                 document.getElementById('login-button').style.display = 'none';
-                const fSnap = await getDocs(query(collection(db, "favorites"), where("userId", "==", user.uid)));
-                favIds = new Set(fSnap.docs.map(d => d.data().eventId));
             } else {
                 status.textContent = '未ログイン';
                 document.getElementById('logout-button').style.display = 'none';
