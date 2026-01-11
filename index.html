@@ -11,18 +11,191 @@
         h1 { color: #00A3A0; text-align: center; margin: 20px 0; }
         #fixed-header { position: sticky; top: 0; z-index: 1000; background: white; padding: 10px 20px; border-bottom: 1px solid #ddd; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         #auth-ui { text-align: right; margin-bottom: 10px; }
-        
-        button { padding: 8px 16px; margin-left: 5px; border-radius: 20px; border: 1px solid #00A3A0; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        button { padding: 8px 16px; margin-left: 5px; border-radius: 20px; border: 1px solid #00A3A0; cursor: pointer; font-weight: bold; }
         #login-button { background: #0ABAB5; color: white; }
-        
         #search-controls { display: flex; gap: 10px; margin: 10px 0; }
         #search-input { flex-grow: 1; padding: 8px; border-radius: 20px; border: 1px solid #ddd; }
         #tag-list { padding: 10px 0; overflow-x: auto; white-space: nowrap; }
-        .tag-button { background: white; margin-right: 5px; border-radius: 15px; padding: 5px 10px; border: 1px solid #ddd; font-size: 0.85em;}
+        .tag-button { background: white; margin-right: 5px; border-radius: 15px; padding: 5px 10px; border: 1px solid #ddd; font-size: 0.85em; cursor: pointer; }
         .tag-button.active { background: #0ABAB5; color: white; }
-
-        .main-content { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
-        #events-list { flex: 1; min-width: 300px; display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
-        
+        .main-content { display: flex; gap: 20px; flex-wrap: wrap; }
+        #events-list { flex: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
         #calendar-view { width: 280px; display: flex; flex-direction: column; gap: 20px; position: sticky; top: 150px; }
-        .calendar-container { background: white; padding: 10px; border-radius: 12
+        .calendar-container { background: white; padding: 10px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .fc .fc-day-sun { background-color: #fff5f5 !important; }
+        .fc .fc-day-sun .fc-daygrid-day-number { color: #EA4335 !important; }
+        .fc .fc-day-sat { background-color: #f5faff !important; }
+        .fc .fc-day-sat .fc-daygrid-day-number { color: #4285F4 !important; }
+        .event-card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: relative; }
+        .event-image { width: 100%; height: 160px; object-fit: cover; border-radius: 8px; }
+        .action-buttons { display: flex; gap: 5px; margin: 10px 0; }
+        .calendar-button, .line-button, .mail-button { flex: 1; font-size: 0.65em; padding: 10px 2px; text-decoration: none; text-align: center; border-radius: 20px; color: white !important; font-weight: bold; }
+        .calendar-button { background: #4285F4; } .mail-button { background: #EA4335; } .line-button { background: #06C755; }
+        .review-section { border-top: 1px solid #eee; padding-top: 10px; margin-top: 10px; font-size: 0.85em; }
+        .star-input { color: #ddd; font-size: 1.5em; cursor: pointer; }
+        .star-input.active { color: #ffc107; }
+        .review-input { width: 100%; padding: 8px; margin: 5px 0; box-sizing: border-box; border-radius: 5px; border: 1px solid #ccc; }
+        .post-btn { background: #00A3A0; color: white; border: none; padding: 8px; width: 100%; border-radius: 15px; cursor: pointer; }
+        .review-item { border-bottom: 1px solid #eee; padding: 5px 0; }
+        .review-stars { color: #ffc107; }
+        .del-rev-btn { color: red; cursor: pointer; font-size: 0.7em; margin-left: 10px; }
+        @media (max-width: 600px) { #calendar-view { width: 100%; position: static; order: -1; } }
+    </style>
+</head>
+<body>
+    <div id="fixed-header">
+        <div class="container">
+            <div id="auth-ui">
+                <span id="user-status">読み込み中...</span>
+                <button id="login-button">ログイン</button>
+                <button id="logout-button" style="display:none;">ログアウト</button>
+            </div>
+            <h1>EVENT LIST</h1>
+            <div id="search-controls">
+                <input type="text" id="search-input" placeholder="イベント名で検索...">
+                <button id="search-button">検索</button>
+            </div>
+            <div id="tag-list"></div>
+        </div>
+    </div>
+    <div class="container">
+        <div class="main-content">
+            <div id="events-list">イベントを読み込み中...</div>
+            <div id="calendar-view">
+                <div class="calendar-container"><div id="calendar-now"></div></div>
+                <div class="calendar-container"><div id="calendar-next"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+        import { getFirestore, collection, addDoc, getDocs, orderBy, query, where, doc, deleteDoc, serverTimestamp, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBH8EPKOwIBIMR16Z7PTECc2Lp0Y5cfkHQ",
+            authDomain: "november5th-a1336.firebaseapp.com",
+            projectId: "november5th-a1336",
+            storageBucket: "november5th-a1336.firebasestorage.app",
+            messagingSenderId: "11537951889",
+            appId: "1:11537951889:web:d783b2298fc90f88a3a330"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        let allEvents = [];
+        let currentTag = '';
+
+        async function load() {
+            if (allEvents.length === 0) {
+                const snap = await getDocs(query(collection(db, "events"), orderBy("date", "asc")));
+                allEvents = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                renderCalendars(allEvents);
+                renderTags(allEvents);
+            }
+            renderEvents();
+        }
+
+        function renderCalendars(events) {
+            const calEvents = events.map(e => ({ title: e.title, start: (e.date?.toDate ? e.date.toDate() : new Date(e.date)).toISOString().split('T')[0], backgroundColor: '#00A3A0' }));
+            const c1 = new FullCalendar.Calendar(document.getElementById('calendar-now'), { initialView: 'dayGridMonth', locale: 'ja', height: 'auto', events: calEvents, headerToolbar: { left: '', center: 'title', right: '' } });
+            const next = new Date(); next.setMonth(next.getMonth() + 1);
+            const c2 = new FullCalendar.Calendar(document.getElementById('calendar-next'), { initialView: 'dayGridMonth', initialDate: next, locale: 'ja', height: 'auto', events: calEvents, headerToolbar: { left: '', center: 'title', right: '' } });
+            c1.render(); c2.render();
+        }
+
+        function renderTags(events) {
+            const tags = new Set();
+            events.forEach(e => (Array.isArray(e.tags) ? e.tags : (e.tags||'').split(',')).forEach(t => t.trim() && tags.add(t.trim())));
+            const tl = document.getElementById('tag-list');
+            tl.innerHTML = `<button class="tag-button active" id="tag-all">全て</button>` + Array.from(tags).map(t => `<button class="tag-button" data-tag="${t}">${t}</button>`).join('');
+            tl.onclick = (e) => {
+                if (!e.target.dataset.tag && e.target.id !== 'tag-all') return;
+                currentTag = e.target.dataset.tag || '';
+                Array.from(tl.children).forEach(b => b.classList.toggle('active', b === e.target));
+                renderEvents();
+            };
+        }
+
+        function renderEvents() {
+            const key = document.getElementById('search-input').value.toLowerCase();
+            const filtered = allEvents.filter(e => {
+                const matchTag = !currentTag || (e.tags||'').includes(currentTag);
+                const matchKey = !key || (e.title+e.location).toLowerCase().includes(key);
+                return matchTag && matchKey;
+            });
+
+            const list = document.getElementById('events-list');
+            list.innerHTML = filtered.map(e => `
+                <div class="event-card" id="card-${e.id}">
+                    ${e.imageUrl ? `<img src="${e.imageUrl}" class="event-image">` : ''}
+                    <h3>${e.title}</h3>
+                    <p>📍 ${e.location}</p>
+                    <div class="action-buttons">
+                        <a href="https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(e.title)}" target="_blank" class="calendar-button">📅 登録</a>
+                        <a href="https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(e.title)}&body=${encodeURIComponent(window.location.href)}" target="_blank" class="mail-button">📧 Gmail</a>
+                        <a href="https://line.me/R/msg/text/?${encodeURIComponent(e.title)}" target="_blank" class="line-button">💬 LINE</a>
+                    </div>
+                    <div class="review-section">
+                        <h4>レビュー ⭐</h4>
+                        <div id="rev-form-${e.id}"></div>
+                        <div id="rev-list-${e.id}">読み込み中...</div>
+                    </div>
+                </div>
+            `).join('');
+
+            filtered.forEach(e => setupReview(e.id));
+        }
+
+        function setupReview(eid) {
+            const formDiv = document.getElementById(`rev-form-${eid}`);
+            const listDiv = document.getElementById(`rev-list-${eid}`);
+            
+            if (auth.currentUser) {
+                formDiv.innerHTML = `
+                    <div class="star-row" id="stars-${eid}">
+                        <span class="star-input" data-v="1">★</span><span class="star-input" data-v="2">★</span><span class="star-input" data-v="3">★</span><span class="star-input" data-v="4">★</span><span class="star-input" data-v="5">★</span>
+                    </div>
+                    <input type="text" id="text-${eid}" class="review-input" placeholder="感想を書く...">
+                    <button class="post-btn" id="btn-${eid}">投稿</button>
+                `;
+                let selR = 0;
+                const stars = formDiv.querySelectorAll('.star-input');
+                stars.forEach(s => s.onclick = () => { selR = s.dataset.v; stars.forEach(st => st.classList.toggle('active', st.dataset.v <= selR)); });
+                formDiv.querySelector(`#btn-${eid}`).onclick = async () => {
+                    const txt = document.getElementById(`text-${eid}`).value;
+                    if (!selR || !txt) return alert("星とコメントを入力してください");
+                    await addDoc(collection(db, "reviews"), { eventId: eid, rating: parseInt(selR), comment: txt, userId: auth.currentUser.uid, userName: auth.currentUser.displayName, createdAt: serverTimestamp() });
+                    document.getElementById(`text-${eid}`).value = ""; selR = 0; stars.forEach(st => st.classList.remove('active'));
+                };
+            }
+
+            onSnapshot(query(collection(db, "reviews"), where("eventId", "==", eid)), (sn) => {
+                const sorted = sn.docs.sort((a,b) => (b.data().createdAt?.seconds || 0) - (a.data().createdAt?.seconds || 0));
+                listDiv.innerHTML = sorted.map(doc => {
+                    const r = doc.data();
+                    return `<div class="review-item">
+                        <b>${r.userName || '匿名'}</b> <span class="review-stars">${'★'.repeat(r.rating || 0)}</span><br>${r.comment}
+                        ${auth.currentUser && auth.currentUser.uid === r.userId ? `<span class="del-rev-btn" data-rid="${doc.id}">[削除]</span>` : ''}
+                    </div>`;
+                }).join('') || '<p style="color:#ccc;">まだありません</p>';
+                listDiv.querySelectorAll('.del-rev-btn').forEach(b => b.onclick = () => deleteDoc(doc(db, "reviews", b.dataset.rid)));
+            });
+        }
+
+        onAuthStateChanged(auth, (user) => {
+            document.getElementById('user-status').textContent = user ? user.displayName : '未ログイン';
+            document.getElementById('login-button').style.display = user ? 'none' : 'inline-block';
+            document.getElementById('logout-button').style.display = user ? 'inline-block' : 'none';
+            load();
+        });
+
+        document.getElementById('login-button').onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
+        document.getElementById('logout-button').onclick = () => signOut(auth);
+        document.getElementById('search-button').onclick = () => renderEvents();
+    </script>
+</body>
+</html>
