@@ -8,37 +8,48 @@
     <style>
         body { font-family: sans-serif; margin: 0; padding: 0; background-color: #f4f7f6; color: #333; }
         .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        h1 { color: #00A3A0; text-align: center; margin: 20px 0; }
+        h1 { color: #00A3A0; text-align: center; margin: 20px 0; cursor: pointer; }
         #fixed-header { position: sticky; top: 0; z-index: 1000; background: white; padding: 10px 20px; border-bottom: 1px solid #ddd; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         #auth-ui { text-align: right; margin-bottom: 10px; }
-        button { padding: 8px 16px; margin-left: 5px; border-radius: 20px; border: 1px solid #00A3A0; cursor: pointer; font-weight: bold; }
+        
+        button { padding: 8px 16px; margin-left: 5px; border-radius: 20px; border: 1px solid #00A3A0; cursor: pointer; font-weight: bold; transition: 0.2s; }
         #login-button { background: #0ABAB5; color: white; }
+        
         #search-controls { display: flex; gap: 10px; margin: 10px 0; }
         #search-input { flex-grow: 1; padding: 8px; border-radius: 20px; border: 1px solid #ddd; }
         #tag-list { padding: 10px 0; overflow-x: auto; white-space: nowrap; }
         .tag-button { background: white; margin-right: 5px; border-radius: 15px; padding: 5px 10px; border: 1px solid #ddd; font-size: 0.85em; cursor: pointer; }
         .tag-button.active { background: #0ABAB5; color: white; }
+
+        /* 画面切り替え用 */
+        #detail-page { display: none; }
+        .back-button { background: #666; color: white; border: none; margin-bottom: 20px; }
+
         .main-content { display: flex; gap: 20px; flex-wrap: wrap; }
         #events-list { flex: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
+        
         #calendar-view { width: 280px; display: flex; flex-direction: column; gap: 20px; position: sticky; top: 150px; }
         .calendar-container { background: white; padding: 10px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .fc .fc-day-sun { background-color: #fff5f5 !important; }
-        .fc .fc-day-sun .fc-daygrid-day-number { color: #EA4335 !important; }
-        .fc .fc-day-sat { background-color: #f5faff !important; }
-        .fc .fc-day-sat .fc-daygrid-day-number { color: #4285F4 !important; }
-        .event-card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: relative; }
+        
+        .event-card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); cursor: pointer; transition: 0.3s; }
+        .event-card:hover { transform: translateY(-5px); }
         .event-image { width: 100%; height: 160px; object-fit: cover; border-radius: 8px; }
+        
+        /* 詳細ページ専用スタイル */
+        .detail-card { background: white; border-radius: 15px; padding: 30px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        .detail-image { width: 100%; max-height: 400px; object-fit: contain; border-radius: 10px; margin-bottom: 20px; }
+
         .action-buttons { display: flex; gap: 5px; margin: 10px 0; }
-        .calendar-button, .line-button, .mail-button { flex: 1; font-size: 0.65em; padding: 10px 2px; text-decoration: none; text-align: center; border-radius: 20px; color: white !important; font-weight: bold; }
+        .calendar-button, .line-button, .mail-button { flex: 1; font-size: 0.7em; padding: 12px 2px; text-decoration: none; text-align: center; border-radius: 20px; color: white !important; font-weight: bold; }
         .calendar-button { background: #4285F4; } .mail-button { background: #EA4335; } .line-button { background: #06C755; }
-        .review-section { border-top: 1px solid #eee; padding-top: 10px; margin-top: 10px; font-size: 0.85em; }
+        
+        .review-section { border-top: 1px solid #eee; padding-top: 15px; margin-top: 20px; }
         .star-input { color: #ddd; font-size: 1.5em; cursor: pointer; }
         .star-input.active { color: #ffc107; }
-        .review-input { width: 100%; padding: 8px; margin: 5px 0; box-sizing: border-box; border-radius: 5px; border: 1px solid #ccc; }
-        .post-btn { background: #00A3A0; color: white; border: none; padding: 8px; width: 100%; border-radius: 15px; cursor: pointer; }
-        .review-item { border-bottom: 1px solid #eee; padding: 5px 0; }
-        .review-stars { color: #ffc107; }
-        .del-rev-btn { color: red; cursor: pointer; font-size: 0.7em; margin-left: 10px; }
+        .review-input { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box; }
+        .post-btn { background: #00A3A0; color: white; border: none; padding: 10px; width: 100%; border-radius: 20px; }
+        .review-item { border-bottom: 1px solid #eee; padding: 10px 0; }
+
         @media (max-width: 600px) { #calendar-view { width: 100%; position: static; order: -1; } }
     </style>
 </head>
@@ -50,22 +61,30 @@
                 <button id="login-button">ログイン</button>
                 <button id="logout-button" style="display:none;">ログアウト</button>
             </div>
-            <h1>EVENT LIST</h1>
-            <div id="search-controls">
-                <input type="text" id="search-input" placeholder="イベント名で検索...">
-                <button id="search-button">検索</button>
+            <h1 onclick="showList()">EVENT LIST</h1>
+            <div id="list-controls">
+                <div id="search-controls">
+                    <input type="text" id="search-input" placeholder="検索...">
+                    <button id="search-button">検索</button>
+                </div>
+                <div id="tag-list"></div>
             </div>
-            <div id="tag-list"></div>
         </div>
     </div>
-    <div class="container">
+
+    <div class="container" id="list-page">
         <div class="main-content">
-            <div id="events-list">イベントを読み込み中...</div>
+            <div id="events-list">読み込み中...</div>
             <div id="calendar-view">
                 <div class="calendar-container"><div id="calendar-now"></div></div>
                 <div class="calendar-container"><div id="calendar-next"></div></div>
             </div>
         </div>
+    </div>
+
+    <div class="container" id="detail-page">
+        <button class="back-button" onclick="showList()">← 一覧に戻る</button>
+        <div id="event-detail-content"></div>
     </div>
 
     <script type="module">
@@ -89,22 +108,59 @@
         let allEvents = [];
         let currentTag = '';
 
+        // 画面切り替え関数をグローバルに
+        window.showList = () => {
+            document.getElementById('list-page').style.display = 'block';
+            document.getElementById('list-controls').style.display = 'block';
+            document.getElementById('detail-page').style.display = 'none';
+        };
+
+        window.showDetail = (eid) => {
+            const e = allEvents.find(event => event.id === eid);
+            if (!e) return;
+            
+            document.getElementById('list-page').style.display = 'none';
+            document.getElementById('list-controls').style.display = 'none';
+            document.getElementById('detail-page').style.display = 'block';
+            window.scrollTo(0,0);
+
+            const content = document.getElementById('event-detail-content');
+            content.innerHTML = `
+                <div class="detail-card">
+                    ${e.imageUrl ? `<img src="${e.imageUrl}" class="detail-image">` : ''}
+                    <h2>${e.title}</h2>
+                    <p style="font-size: 1.2em;">📍 ${e.location}</p>
+                    <p style="background: #eee; padding: 15px; border-radius: 8px; line-height: 1.6;">${e.description || '詳細情報はありません。'}</p>
+                    
+                    <div class="action-buttons">
+                        <a href="https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(e.title)}" target="_blank" class="calendar-button">📅 カレンダーに登録</a>
+                        <a href="https://line.me/R/msg/text/?${encodeURIComponent(e.title)}" target="_blank" class="line-button">💬 LINEで共有</a>
+                    </div>
+
+                    <div class="review-section">
+                        <h3>レビューを投稿する ⭐</h3>
+                        <div id="det-rev-form"></div>
+                        <h3>みんなの感想</h3>
+                        <div id="det-rev-list">読み込み中...</div>
+                    </div>
+                </div>
+            `;
+            setupReview(eid, true);
+        };
+
         async function load() {
-            if (allEvents.length === 0) {
-                const snap = await getDocs(query(collection(db, "events"), orderBy("date", "asc")));
-                allEvents = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                renderCalendars(allEvents);
-                renderTags(allEvents);
-            }
+            const snap = await getDocs(query(collection(db, "events"), orderBy("date", "asc")));
+            allEvents = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            renderCalendars(allEvents);
+            renderTags(allEvents);
             renderEvents();
         }
 
         function renderCalendars(events) {
             const calEvents = events.map(e => ({ title: e.title, start: (e.date?.toDate ? e.date.toDate() : new Date(e.date)).toISOString().split('T')[0], backgroundColor: '#00A3A0' }));
-            const c1 = new FullCalendar.Calendar(document.getElementById('calendar-now'), { initialView: 'dayGridMonth', locale: 'ja', height: 'auto', events: calEvents, headerToolbar: { left: '', center: 'title', right: '' } });
+            new FullCalendar.Calendar(document.getElementById('calendar-now'), { initialView: 'dayGridMonth', locale: 'ja', height: 'auto', events: calEvents }).render();
             const next = new Date(); next.setMonth(next.getMonth() + 1);
-            const c2 = new FullCalendar.Calendar(document.getElementById('calendar-next'), { initialView: 'dayGridMonth', initialDate: next, locale: 'ja', height: 'auto', events: calEvents, headerToolbar: { left: '', center: 'title', right: '' } });
-            c1.render(); c2.render();
+            new FullCalendar.Calendar(document.getElementById('calendar-next'), { initialView: 'dayGridMonth', initialDate: next, locale: 'ja', height: 'auto', events: calEvents }).render();
         }
 
         function renderTags(events) {
@@ -122,54 +178,38 @@
 
         function renderEvents() {
             const key = document.getElementById('search-input').value.toLowerCase();
-            const filtered = allEvents.filter(e => {
-                const matchTag = !currentTag || (e.tags||'').includes(currentTag);
-                const matchKey = !key || (e.title+e.location).toLowerCase().includes(key);
-                return matchTag && matchKey;
-            });
-
+            const filtered = allEvents.filter(e => (!currentTag || (e.tags||'').includes(currentTag)) && (!key || (e.title+e.location).toLowerCase().includes(key)));
             const list = document.getElementById('events-list');
             list.innerHTML = filtered.map(e => `
-                <div class="event-card" id="card-${e.id}">
+                <div class="event-card" onclick="showDetail('${e.id}')">
                     ${e.imageUrl ? `<img src="${e.imageUrl}" class="event-image">` : ''}
                     <h3>${e.title}</h3>
                     <p>📍 ${e.location}</p>
-                    <div class="action-buttons">
-                        <a href="https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(e.title)}" target="_blank" class="calendar-button">📅 登録</a>
-                        <a href="https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(e.title)}&body=${encodeURIComponent(window.location.href)}" target="_blank" class="mail-button">📧 Gmail</a>
-                        <a href="https://line.me/R/msg/text/?${encodeURIComponent(e.title)}" target="_blank" class="line-button">💬 LINE</a>
-                    </div>
-                    <div class="review-section">
-                        <h4>レビュー ⭐</h4>
-                        <div id="rev-form-${e.id}"></div>
-                        <div id="rev-list-${e.id}">読み込み中...</div>
-                    </div>
+                    <p style="color: #00A3A0; font-weight: bold; font-size: 0.8em;">詳細を見る →</p>
                 </div>
             `).join('');
-
-            filtered.forEach(e => setupReview(e.id));
         }
 
-        function setupReview(eid) {
-            const formDiv = document.getElementById(`rev-form-${eid}`);
-            const listDiv = document.getElementById(`rev-list-${eid}`);
+        function setupReview(eid, isDetail = false) {
+            const formDiv = document.getElementById(isDetail ? 'det-rev-form' : `rev-form-${eid}`);
+            const listDiv = document.getElementById(isDetail ? 'det-rev-list' : `rev-list-${eid}`);
             
             if (auth.currentUser) {
                 formDiv.innerHTML = `
-                    <div class="star-row" id="stars-${eid}">
+                    <div id="stars-area">
                         <span class="star-input" data-v="1">★</span><span class="star-input" data-v="2">★</span><span class="star-input" data-v="3">★</span><span class="star-input" data-v="4">★</span><span class="star-input" data-v="5">★</span>
                     </div>
-                    <input type="text" id="text-${eid}" class="review-input" placeholder="感想を書く...">
-                    <button class="post-btn" id="btn-${eid}">投稿</button>
+                    <input type="text" id="rev-input-text" class="review-input" placeholder="感想を書いてください...">
+                    <button class="post-btn" id="rev-submit">投稿する</button>
                 `;
                 let selR = 0;
                 const stars = formDiv.querySelectorAll('.star-input');
                 stars.forEach(s => s.onclick = () => { selR = s.dataset.v; stars.forEach(st => st.classList.toggle('active', st.dataset.v <= selR)); });
-                formDiv.querySelector(`#btn-${eid}`).onclick = async () => {
-                    const txt = document.getElementById(`text-${eid}`).value;
-                    if (!selR || !txt) return alert("星とコメントを入力してください");
+                formDiv.querySelector('#rev-submit').onclick = async () => {
+                    const txt = document.getElementById('rev-input-text').value;
+                    if (!selR || !txt) return alert("星と感想を入力してください");
                     await addDoc(collection(db, "reviews"), { eventId: eid, rating: parseInt(selR), comment: txt, userId: auth.currentUser.uid, userName: auth.currentUser.displayName, createdAt: serverTimestamp() });
-                    document.getElementById(`text-${eid}`).value = ""; selR = 0; stars.forEach(st => st.classList.remove('active'));
+                    document.getElementById('rev-input-text').value = ""; selR = 0; stars.forEach(st => st.classList.remove('active'));
                 };
             }
 
@@ -178,13 +218,18 @@
                 listDiv.innerHTML = sorted.map(doc => {
                     const r = doc.data();
                     return `<div class="review-item">
-                        <b>${r.userName || '匿名'}</b> <span class="review-stars">${'★'.repeat(r.rating || 0)}</span><br>${r.comment}
-                        ${auth.currentUser && auth.currentUser.uid === r.userId ? `<span class="del-rev-btn" data-rid="${doc.id}">[削除]</span>` : ''}
+                        <b>${r.userName || '匿名'}</b> <span style="color:#ffc107">${'★'.repeat(r.rating || 0)}</span><br>${r.comment}
+                        ${auth.currentUser && auth.currentUser.uid === r.userId ? `<span style="color:red; cursor:pointer; font-size:0.8em; margin-left:10px;" onclick="window.deleteReview('${doc.id}', '${eid}')">[削除]</span>` : ''}
                     </div>`;
-                }).join('') || '<p style="color:#ccc;">まだありません</p>';
-                listDiv.querySelectorAll('.del-rev-btn').forEach(b => b.onclick = () => deleteDoc(doc(db, "reviews", b.dataset.rid)));
+                }).join('') || '<p style="color:#ccc;">まだレビューはありません</p>';
             });
         }
+
+        window.deleteReview = async (rid, eid) => {
+            if(confirm("削除しますか？")) {
+                await deleteDoc(doc(db, "reviews", rid));
+            }
+        };
 
         onAuthStateChanged(auth, (user) => {
             document.getElementById('user-status').textContent = user ? user.displayName : '未ログイン';
