@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>イベントポータル - Official</title>
+    <title>EVENT PORTAL - Official</title>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
     <style>
         body { font-family: 'Helvetica Neue', Arial, sans-serif; margin: 0; padding: 0; background-color: #f0f4f4; color: #333; }
@@ -28,7 +28,6 @@
         .detail-card { background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
         .detail-header-img { width: 100%; max-height: 450px; object-fit: cover; border-radius: 15px; margin-bottom: 20px; }
         
-        /* 情報を整理するグリッド */
         .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin: 20px 0; background: #f9f9f9; padding: 20px; border-radius: 15px; }
         .info-item { display: flex; align-items: center; gap: 10px; font-size: 1.05em; }
         .info-label { font-weight: bold; color: #00A3A0; min-width: 90px; }
@@ -108,30 +107,33 @@
             document.getElementById('detail-page').style.display = 'block';
             window.scrollTo(0,0);
 
-            // 日付処理（Timestamp型に対応）
-            const d = e.date && e.date.toDate ? e.date.toDate() : new Date(e.date);
-            const dateStr = d.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
+            // 日付処理
+            let dateStr = "日付未定";
+            if (e.date) {
+                const d = e.date.toDate ? e.date.toDate() : new Date(e.date);
+                dateStr = d.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
+            }
 
             document.getElementById('event-detail-content').innerHTML = `
                 <div class="detail-card">
                     ${e.imageUrl ? `<img src="${e.imageUrl}" class="detail-header-img">` : ''}
-                    <h2 style="font-size:1.8em; margin-bottom:10px;">${e.title}</h2>
+                    <h2 style="font-size:1.8em; margin-bottom:10px;">${e.title || "無題のイベント"}</h2>
                     
                     <div class="info-grid">
                         <div class="info-item"><span class="info-label">📅 日時</span> <span>${dateStr}</span></div>
-                        <div class="info-item"><span class="info-label">📍 場所</span> <span>${e.location}</span></div>
-                        <div class="info-item"><span class="info-label">💰 参加費</span> <span>${e.price || '無料・記載なし'}</span></div>
-                        <div class="info-item"><span class="info-label">✉️ 連絡先</span> <span>${e.contact || '記載なし'}</span></div>
+                        <div class="info-item"><span class="info-label">📍 場所</span> <span>${e.location || "記載なし"}</span></div>
+                        <div class="info-item"><span class="info-label">💰 参加費</span> <span>${e.price || "無料・記載なし"}</span></div>
+                        <div class="info-item"><span class="info-label">✉️ 連絡先</span> <span>${e.contact || "記載なし"}</span></div>
                     </div>
 
                     <div class="description-box">
                         <div style="font-weight:bold; color:#00A3A0; margin-bottom:10px;">イベント内容</div>
-                        ${e.description}
+                        ${e.description || "詳細な説明はありません。"}
                     </div>
 
                     <div class="action-buttons">
-                        <a href="https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(e.title)}" target="_blank" class="btn-link btn-cal">📅 Googleカレンダーに追加</a>
-                        <a href="https://line.me/R/msg/text/?${encodeURIComponent(e.title + ' ' + window.location.href)}" target="_blank" class="btn-link btn-line">💬 LINEで友達に教える</a>
+                        <a href="https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(e.title)}" target="_blank" class="btn-link btn-cal">📅 カレンダー登録</a>
+                        <a href="https://line.me/R/msg/text/?${encodeURIComponent(e.title + ' ' + window.location.href)}" target="_blank" class="btn-link btn-line">💬 LINEで送る</a>
                     </div>
 
                     <div class="review-section">
@@ -155,13 +157,13 @@
 
         function renderEvents() {
             const key = document.getElementById('search-input').value.toLowerCase();
-            const filtered = allEvents.filter(e => (e.title + e.location).toLowerCase().includes(key));
+            const filtered = allEvents.filter(e => (e.title + (e.location||'')).toLowerCase().includes(key));
             document.getElementById('events-list').innerHTML = filtered.map(e => `
                 <div class="event-card" onclick="showDetail('${e.id}')">
                     ${e.imageUrl ? `<img src="${e.imageUrl}" class="event-image">` : ''}
                     <div class="card-content">
                         <h3 style="margin:0 0 8px 0; font-size:1.1em;">${e.title}</h3>
-                        <p style="color:#666; font-size:0.85em; margin:0;">📍 ${e.location}</p>
+                        <p style="color:#666; font-size:0.85em; margin:0;">📍 ${e.location || '場所未定'}</p>
                         <p style="color:#00A3A0; font-weight:bold; font-size:0.8em; text-align:right; margin-top:10px;">詳細を見る →</p>
                     </div>
                 </div>
