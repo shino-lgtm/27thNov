@@ -7,7 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
     <style>
         body { font-family: 'Helvetica Neue', Arial, sans-serif; margin: 0; padding: 0; background-color: #f0f4f4; color: #333; }
-        .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
         h1 { color: #00A3A0; text-align: center; cursor: pointer; font-size: 2em; letter-spacing: 2px; }
         #fixed-header { position: sticky; top: 0; z-index: 1000; background: white; padding: 10px 20px; border-bottom: 1px solid #ddd; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         #auth-ui { text-align: right; }
@@ -19,19 +19,32 @@
         #detail-page { display: none; }
         .back-button { background: #eee; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; margin-bottom: 20px; font-weight: bold; }
 
-        #events-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        /* レイアウト：メインとカレンダー */
+        .main-content { display: flex; gap: 20px; flex-wrap: wrap; }
+        #events-list { flex: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        
+        /* カレンダーサイドバー */
+        #calendar-view { width: 280px; display: flex; flex-direction: column; gap: 20px; }
+        .calendar-container { background: white; padding: 10px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .calendar-box { font-size: 11px; }
+
+        /* カレンダー土日色 */
+        .fc .fc-day-sun { background-color: #fff5f5 !important; }
+        .fc .fc-day-sun .fc-daygrid-day-number { color: #EA4335 !important; }
+        .fc .fc-day-sat { background-color: #f5faff !important; }
+        .fc .fc-day-sat .fc-daygrid-day-number { color: #4285F4 !important; }
+
         .event-card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08); cursor: pointer; transition: 0.3s; }
         .event-card:hover { transform: translateY(-5px); }
         .event-image { width: 100%; height: 180px; object-fit: cover; }
         .card-content { padding: 15px; }
 
+        /* 詳細ページスタイル */
         .detail-card { background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
         .detail-header-img { width: 100%; max-height: 450px; object-fit: cover; border-radius: 15px; margin-bottom: 20px; }
-        
         .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin: 20px 0; background: #f9f9f9; padding: 20px; border-radius: 15px; }
         .info-item { display: flex; align-items: center; gap: 10px; font-size: 1.05em; }
         .info-label { font-weight: bold; color: #00A3A0; min-width: 90px; }
-        
         .description-box { line-height: 1.8; color: #444; border-left: 5px solid #0ABAB5; padding-left: 20px; margin: 25px 0; font-size: 1.1em; white-space: pre-wrap; }
 
         .action-buttons { display: flex; gap: 10px; margin: 25px 0; }
@@ -44,6 +57,10 @@
         .review-input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box; }
         .post-btn { background: #00A3A0; color: white; border: none; padding: 12px; width: 100%; border-radius: 30px; font-weight: bold; cursor: pointer; }
         .review-item { background: #fcfcfc; padding: 15px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #eee; }
+
+        @media (max-width: 900px) {
+            #calendar-view { width: 100%; order: -1; position: static; }
+        }
     </style>
 </head>
 <body>
@@ -65,7 +82,18 @@
     </div>
 
     <div class="container" id="list-page">
-        <div id="events-list">イベントを読み込み中...</div>
+        <div class="main-content">
+            <div id="events-list">イベントを読み込み中...</div>
+            
+            <div id="calendar-view">
+                <div class="calendar-container">
+                    <div id="calendar-now" class="calendar-box"></div>
+                </div>
+                <div class="calendar-container">
+                    <div id="calendar-next" class="calendar-box"></div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="container" id="detail-page">
@@ -107,35 +135,27 @@
             document.getElementById('detail-page').style.display = 'block';
             window.scrollTo(0,0);
 
-            // 日付処理
-            let dateStr = "日付未定";
-            if (e.date) {
-                const d = e.date.toDate ? e.date.toDate() : new Date(e.date);
-                dateStr = d.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
-            }
+            const d = e.date && e.date.toDate ? e.date.toDate() : new Date(e.date);
+            const dateStr = d.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
 
             document.getElementById('event-detail-content').innerHTML = `
                 <div class="detail-card">
                     ${e.imageUrl ? `<img src="${e.imageUrl}" class="detail-header-img">` : ''}
-                    <h2 style="font-size:1.8em; margin-bottom:10px;">${e.title || "無題のイベント"}</h2>
-                    
+                    <h2 style="font-size:1.8em; margin-bottom:10px;">${e.title}</h2>
                     <div class="info-grid">
                         <div class="info-item"><span class="info-label">📅 日時</span> <span>${dateStr}</span></div>
-                        <div class="info-item"><span class="info-label">📍 場所</span> <span>${e.location || "記載なし"}</span></div>
-                        <div class="info-item"><span class="info-label">💰 参加費</span> <span>${e.price || "無料・記載なし"}</span></div>
-                        <div class="info-item"><span class="info-label">✉️ 連絡先</span> <span>${e.contact || "記載なし"}</span></div>
+                        <div class="info-item"><span class="info-label">📍 場所</span> <span>${e.location}</span></div>
+                        <div class="info-item"><span class="info-label">💰 参加費</span> <span>${e.price || '無料・記載なし'}</span></div>
+                        <div class="info-item"><span class="info-label">✉️ 連絡先</span> <span>${e.contact || '記載なし'}</span></div>
                     </div>
-
                     <div class="description-box">
                         <div style="font-weight:bold; color:#00A3A0; margin-bottom:10px;">イベント内容</div>
-                        ${e.description || "詳細な説明はありません。"}
+                        ${e.description}
                     </div>
-
                     <div class="action-buttons">
-                        <a href="https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(e.title)}" target="_blank" class="btn-link btn-cal">📅 カレンダー登録</a>
+                        <a href="https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(e.title)}" target="_blank" class="btn-link btn-cal">📅 Googleカレンダー</a>
                         <a href="https://line.me/R/msg/text/?${encodeURIComponent(e.title + ' ' + window.location.href)}" target="_blank" class="btn-link btn-line">💬 LINEで送る</a>
                     </div>
-
                     <div class="review-section">
                         <h3>レビューを投稿する ⭐</h3>
                         <div id="det-rev-form"></div>
@@ -151,8 +171,29 @@
             try {
                 const snap = await getDocs(query(collection(db, "events"), orderBy("date", "asc")));
                 allEvents = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                renderCalendars(allEvents); // ← ここでカレンダーを描画
                 renderEvents();
             } catch (e) { console.error(e); }
+        }
+
+        function renderCalendars(events) {
+            const calEvents = events.map(e => ({
+                title: e.title,
+                start: (e.date?.toDate ? e.date.toDate() : new Date(e.date)).toISOString().split('T')[0],
+                backgroundColor: '#00A3A0',
+                borderColor: '#00A3A0'
+            }));
+
+            // 今月
+            const cNow = new FullCalendar.Calendar(document.getElementById('calendar-now'), {
+                initialView: 'dayGridMonth', locale: 'ja', height: 'auto', events: calEvents, headerToolbar: { left: '', center: 'title', right: '' }
+            });
+            // 翌月
+            const nextMonth = new Date(); nextMonth.setMonth(nextMonth.getMonth() + 1);
+            const cNext = new FullCalendar.Calendar(document.getElementById('calendar-next'), {
+                initialView: 'dayGridMonth', initialDate: nextMonth, locale: 'ja', height: 'auto', events: calEvents, headerToolbar: { left: '', center: 'title', right: '' }
+            });
+            cNow.render(); cNext.render();
         }
 
         function renderEvents() {
@@ -163,11 +204,11 @@
                     ${e.imageUrl ? `<img src="${e.imageUrl}" class="event-image">` : ''}
                     <div class="card-content">
                         <h3 style="margin:0 0 8px 0; font-size:1.1em;">${e.title}</h3>
-                        <p style="color:#666; font-size:0.85em; margin:0;">📍 ${e.location || '場所未定'}</p>
+                        <p style="color:#666; font-size:0.85em; margin:0;">📍 ${e.location}</p>
                         <p style="color:#00A3A0; font-weight:bold; font-size:0.8em; text-align:right; margin-top:10px;">詳細を見る →</p>
                     </div>
                 </div>
-            `).join('') || '<p>該当するイベントはありません。</p>';
+            `).join('') || '<p>該当なし</p>';
         }
 
         function setupReview(eid) {
@@ -178,7 +219,7 @@
                     <div style="margin-bottom:10px;">
                         <span class="star-input" data-v="1">★</span><span class="star-input" data-v="2">★</span><span class="star-input" data-v="3">★</span><span class="star-input" data-v="4">★</span><span class="star-input" data-v="5">★</span>
                     </div>
-                    <textarea id="rev-text" class="review-input" rows="3" placeholder="感想をシェアしましょう！"></textarea>
+                    <textarea id="rev-text" class="review-input" rows="3" placeholder="感想を書く..."></textarea>
                     <button class="post-btn" id="rev-btn">投稿する</button>
                 `;
                 let score = 0;
@@ -186,24 +227,18 @@
                 stars.forEach(s => s.onclick = () => { score = s.dataset.v; stars.forEach(st => st.classList.toggle('active', st.dataset.v <= score)); });
                 formDiv.querySelector('#rev-btn').onclick = async () => {
                     const txt = document.getElementById('rev-text').value;
-                    if (!score || !txt) return alert("評価とコメントを入力してください。");
+                    if (!score || !txt) return alert("星とコメントを入れてください");
                     await addDoc(collection(db, "reviews"), { eventId: eid, rating: parseInt(score), comment: txt, userId: auth.currentUser.uid, userName: auth.currentUser.displayName, createdAt: serverTimestamp() });
                     document.getElementById('rev-text').value = ""; score = 0; stars.forEach(st => st.classList.remove('active'));
                 };
-            } else {
-                formDiv.innerHTML = '<p style="color:#888; font-size:0.85em;">※ログインするとレビューを投稿できます。</p>';
             }
-
             onSnapshot(query(collection(db, "reviews"), where("eventId", "==", eid)), (sn) => {
                 const sorted = sn.docs.sort((a,b) => (b.data().createdAt?.seconds || 0) - (a.data().createdAt?.seconds || 0));
                 listDiv.innerHTML = sorted.map(d => `<div class="review-item">
-                    <div style="display:flex; justify-content:space-between; font-size:0.9em;">
-                        <b>👤 ${d.data().userName}</b>
-                        <span style="color:#ffc107">${'★'.repeat(d.data().rating)}</span>
-                    </div>
-                    <div style="margin-top:8px; line-height:1.5;">${d.data().comment}</div>
+                    <div style="display:flex; justify-content:space-between; font-size:0.9em;"><b>👤 ${d.data().userName}</b><span style="color:#ffc107">${'★'.repeat(d.data().rating)}</span></div>
+                    <div style="margin-top:8px;">${d.data().comment}</div>
                     ${auth.currentUser && auth.currentUser.uid === d.data().userId ? `<span style="color:red; font-size:0.75em; cursor:pointer;" onclick="deleteDoc(doc(db, 'reviews', '${d.id}'))">[削除]</span>` : ''}
-                </div>`).join('') || '<p style="color:#ccc;">まだレビューはありません。</p>';
+                </div>`).join('') || '<p style="color:#ccc;">レビューなし</p>';
             });
         }
 
