@@ -3,58 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EVENT PORTAL - Official</title>
+    <title>EVENT PORTAL - Premium</title>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
     <style>
-        body { font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif; margin: 0; padding: 0; background-color: #f8f9fa; color: #333; }
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; margin: 0; padding: 0; background-color: #f8f9fa; color: #333; }
         .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
         h1 { color: #00A3A0; text-align: center; cursor: pointer; font-size: 1.8em; letter-spacing: 1px; margin: 20px 0; }
-        #fixed-header { position: sticky; top: 0; z-index: 1000; background: white; padding: 10px 20px; border-bottom: 1px solid #eee; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-        #auth-ui { text-align: right; }
+        #fixed-header { position: sticky; top: 0; z-index: 1000; background: white; padding: 10px 20px; border-bottom: 1px solid #eee; }
+        #auth-ui { text-align: right; font-size: 0.85em; }
         button { padding: 8px 18px; margin-left: 5px; border-radius: 4px; border: 1px solid #00A3A0; cursor: pointer; font-weight: bold; }
         #login-button { background: #00A3A0; color: white; }
-        #search-controls { display: flex; gap: 10px; margin: 15px 0; }
-        #search-input { flex-grow: 1; padding: 10px 15px; border-radius: 4px; border: 1px solid #ddd; outline: none; }
         
+        /* 検索とフィルター */
+        #search-controls { display: flex; gap: 10px; margin: 15px 0; align-items: center; }
+        #search-input { flex-grow: 1; padding: 10px 15px; border-radius: 4px; border: 1px solid #ddd; outline: none; }
+        .filter-tabs { display: flex; gap: 15px; margin-bottom: 20px; border-bottom: 1px solid #eee; }
+        .tab { padding: 10px 5px; cursor: pointer; color: #888; border-bottom: 2px solid transparent; }
+        .tab.active { color: #00A3A0; border-bottom: 2px solid #00A3A0; font-weight: bold; }
+
         #detail-page { display: none; }
-        .back-button { background: none; border: 1px solid #ccc; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-bottom: 20px; font-size: 0.9em; color: #666; }
-        .back-button:hover { background: #f0f0f0; }
+        .back-button { background: none; border: 1px solid #ccc; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-bottom: 20px; color: #666; }
 
         .main-content { display: flex; gap: 30px; flex-wrap: wrap; }
         #events-list { flex: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; }
         
         #calendar-view { width: 300px; display: flex; flex-direction: column; gap: 20px; }
         .calendar-container { background: white; padding: 15px; border-radius: 8px; border: 1px solid #eee; }
-        .calendar-box { font-size: 12px; }
 
-        .event-card { background: white; border-radius: 8px; overflow: hidden; border: 1px solid #eee; cursor: pointer; transition: 0.2s; }
-        .event-card:hover { border-color: #00A3A0; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        /* カードデザイン */
+        .event-card { background: white; border-radius: 8px; overflow: hidden; border: 1px solid #eee; cursor: pointer; transition: 0.2s; position: relative; }
+        .event-card:hover { border-color: #00A3A0; }
         .event-image { width: 100%; height: 180px; object-fit: cover; }
         .card-content { padding: 20px; }
+        
+        /* 開催間近ラベル */
+        .soon-label { position: absolute; top: 10px; left: 10px; background: #EA4335; color: white; padding: 3px 8px; font-size: 0.7em; font-weight: bold; border-radius: 3px; z-index: 5; }
+        /* お気に入りボタン */
+        .fav-btn-card { position: absolute; top: 10px; right: 10px; background: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: 1px solid #eee; font-size: 1.2em; z-index: 6; cursor: pointer; }
 
-        /* --- 詳細ページ：シンプルデザイン --- */
+        /* 詳細ページ */
         .detail-card { background: white; border-radius: 8px; padding: 40px; border: 1px solid #eee; }
-        .detail-header-img { width: 100%; max-height: 500px; object-fit: cover; border-radius: 4px; margin-bottom: 30px; }
-        
-        /* 情報を整理するリスト様式（絵文字なし） */
         .info-list { margin: 30px 0; border-top: 1px solid #eee; }
-        .info-row { display: flex; padding: 15px 0; border-bottom: 1px solid #eee; align-items: baseline; }
-        .info-label { width: 120px; font-weight: bold; color: #666; font-size: 0.9em; flex-shrink: 0; }
-        .info-value { font-size: 1em; color: #333; }
-        
-        .description-box { line-height: 1.8; color: #444; margin: 40px 0; padding: 20px; background: #fcfcfc; border-radius: 4px; border: 1px solid #f0f0f0; }
+        .info-row { display: flex; padding: 15px 0; border-bottom: 1px solid #eee; align-items: center; }
+        .info-label { width: 120px; font-weight: bold; color: #888; font-size: 0.85em; }
+        .map-link { margin-left: 15px; font-size: 0.8em; color: #00A3A0; text-decoration: underline; }
 
         .action-buttons { display: flex; gap: 15px; margin: 30px 0; }
-        .btn-link { flex: 1; text-align: center; padding: 15px; border-radius: 4px; color: white !important; text-decoration: none; font-weight: bold; font-size: 0.95em; }
-        .btn-cal { background: #333; } /* カレンダーもモノトーンに */
-        .btn-line { background: #06C755; }
-
-        .review-section { margin-top: 50px; border-top: 2px solid #333; padding-top: 30px; }
-        .star-input { color: #ddd; font-size: 1.5em; cursor: pointer; }
-        .star-input.active { color: #333; } /* 星も落ち着いた色に */
-        .review-input { width: 100%; padding: 15px; margin: 15px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
-        .post-btn { background: #333; color: white; border: none; padding: 12px; width: 100%; border-radius: 4px; font-weight: bold; cursor: pointer; }
-        .review-item { padding: 20px 0; border-bottom: 1px solid #eee; }
+        .btn-link { flex: 1; text-align: center; padding: 15px; border-radius: 4px; color: white !important; text-decoration: none; font-weight: bold; }
+        .btn-cal { background: #333; } .btn-line { background: #06C755; }
 
         @media (max-width: 900px) { #calendar-view { width: 100%; order: -1; } }
     </style>
@@ -73,6 +69,10 @@
                     <input type="text" id="search-input" placeholder="イベントを検索...">
                     <button id="search-button">検索</button>
                 </div>
+                <div class="filter-tabs">
+                    <div class="tab active" id="tab-all" onclick="changeTab('all')">すべてのイベント</div>
+                    <div class="tab" id="tab-fav" onclick="changeTab('fav')">お気に入り</div>
+                </div>
             </div>
         </div>
     </div>
@@ -81,8 +81,8 @@
         <div class="main-content">
             <div id="events-list">読み込み中...</div>
             <div id="calendar-view">
-                <div class="calendar-container"><div id="calendar-now" class="calendar-box"></div></div>
-                <div class="calendar-container"><div id="calendar-next" class="calendar-box"></div></div>
+                <div class="calendar-container"><div id="calendar-now"></div></div>
+                <div class="calendar-container"><div id="calendar-next"></div></div>
             </div>
         </div>
     </div>
@@ -94,7 +94,7 @@
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-        import { getFirestore, collection, getDocs, orderBy, query, where, addDoc, doc, deleteDoc, serverTimestamp, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+        import { getFirestore, collection, getDocs, orderBy, query, where, addDoc, doc, deleteDoc, setDoc, serverTimestamp, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
         const firebaseConfig = {
@@ -111,11 +111,34 @@
         const auth = getAuth(app);
 
         let allEvents = [];
+        let favIds = new Set();
+        let currentView = 'all';
 
         window.showList = () => {
             document.getElementById('list-page').style.display = 'block';
             document.getElementById('detail-page').style.display = 'none';
             document.getElementById('list-controls').style.display = 'block';
+        };
+
+        window.changeTab = (type) => {
+            currentView = type;
+            document.getElementById('tab-all').classList.toggle('active', type === 'all');
+            document.getElementById('tab-fav').classList.toggle('active', type === 'fav');
+            renderEvents();
+        };
+
+        window.toggleFav = async (e, eid) => {
+            e.stopPropagation();
+            if(!auth.currentUser) return alert("ログインが必要です");
+            const docId = `${auth.currentUser.uid}_${eid}`;
+            if(favIds.has(eid)) {
+                await deleteDoc(doc(db, "favorites", docId));
+                favIds.delete(eid);
+            } else {
+                await setDoc(doc(db, "favorites", docId), { userId: auth.currentUser.uid, eventId: eid });
+                favIds.add(eid);
+            }
+            renderEvents();
         };
 
         window.showDetail = (eid) => {
@@ -126,87 +149,77 @@
             document.getElementById('detail-page').style.display = 'block';
             window.scrollTo(0,0);
 
-            const d = e.date && e.date.toDate ? e.date.toDate() : new Date(e.date);
+            const d = e.date?.toDate ? e.date.toDate() : new Date(e.date);
             const dateStr = d.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
 
             document.getElementById('event-detail-content').innerHTML = `
                 <div class="detail-card">
-                    <h2 style="font-size:2em; margin-bottom:10px; color:#111;">${e.title}</h2>
-                    ${e.imageUrl ? `<img src="${e.imageUrl}" class="detail-header-img">` : ''}
-                    
+                    <h2 style="font-size:2em; margin-bottom:10px;">${e.title}</h2>
+                    ${e.imageUrl ? `<img src="${e.imageUrl}" class="detail-header-img" style="width:100%; border-radius:4px; margin-bottom:20px;">` : ''}
                     <div class="info-list">
-                        <div class="info-row"><div class="info-label">日時</div><div class="info-value">${dateStr}</div></div>
-                        <div class="info-row"><div class="info-label">場所</div><div class="info-value">${e.location}</div></div>
-                        <div class="info-row"><div class="info-label">参加費</div><div class="info-value">${e.price || '無料・記載なし'}</div></div>
-                        <div class="info-row"><div class="info-label">連絡先</div><div class="info-value">${e.contact || '記載なし'}</div></div>
+                        <div class="info-row"><div class="info-label">日時</div><div>${dateStr}</div></div>
+                        <div class="info-row"><div class="info-label">場所</div><div>${e.location} <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(e.location)}" target="_blank" class="map-link">地図を表示</a></div></div>
+                        <div class="info-row"><div class="info-label">参加費</div><div>${e.price || '無料・記載なし'}</div></div>
+                        <div class="info-row"><div class="info-label">連絡先</div><div>${e.contact || '記載なし'}</div></div>
                     </div>
-
-                    <div class="description-box">
-                        <div style="font-weight:bold; margin-bottom:10px; font-size:0.9em; text-transform:uppercase; color:#888; letter-spacing:1px;">Details</div>
-                        ${e.description}
-                    </div>
-
+                    <div class="description-box"><div>Details</div>${e.description}</div>
                     <div class="action-buttons">
                         <a href="https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(e.title)}" target="_blank" class="btn-link btn-cal">Google Calendar</a>
-                        <a href="https://line.me/R/msg/text/?${encodeURIComponent(e.title + ' ' + window.location.href)}" target="_blank" class="btn-link btn-line">LINE Share</a>
                     </div>
-
-                    <div class="review-section">
-                        <h3 style="font-size:1.2em; border-bottom:1px solid #eee; padding-bottom:10px;">Reviews</h3>
-                        <div id="det-rev-form"></div>
-                        <div id="det-rev-list"></div>
-                    </div>
+                    <div id="det-rev-form"></div><div id="det-rev-list"></div>
                 </div>
             `;
             setupReview(eid);
         };
 
         async function fetchEvents() {
-            try {
-                const snap = await getDocs(query(collection(db, "events"), orderBy("date", "asc")));
-                allEvents = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                renderCalendars(allEvents);
-                renderEvents();
-            } catch (e) { console.error(e); }
-        }
-
-        function renderCalendars(events) {
-            const calEvents = events.map(e => ({
-                title: e.title,
-                start: (e.date?.toDate ? e.date.toDate() : new Date(e.date)).toISOString().split('T')[0],
-                backgroundColor: '#00A3A0',
-                borderColor: '#00A3A0'
-            }));
-            new FullCalendar.Calendar(document.getElementById('calendar-now'), { initialView: 'dayGridMonth', locale: 'ja', height: 'auto', events: calEvents, headerToolbar: { left: '', center: 'title', right: '' } }).render();
-            const nextMonth = new Date(); nextMonth.setMonth(nextMonth.getMonth() + 1);
-            new FullCalendar.Calendar(document.getElementById('calendar-next'), { initialView: 'dayGridMonth', initialDate: nextMonth, locale: 'ja', height: 'auto', events: calEvents, headerToolbar: { left: '', center: 'title', right: '' } }).render();
+            const snap = await getDocs(query(collection(db, "events"), orderBy("date", "asc")));
+            allEvents = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            if (auth.currentUser) {
+                const fSnap = await getDocs(query(collection(db, "favorites"), where("userId", "==", auth.currentUser.uid)));
+                favIds = new Set(fSnap.docs.map(d => d.data().eventId));
+            }
+            renderCalendars(allEvents);
+            renderEvents();
         }
 
         function renderEvents() {
             const key = document.getElementById('search-input').value.toLowerCase();
-            const filtered = allEvents.filter(e => (e.title + (e.location||'')).toLowerCase().includes(key));
-            document.getElementById('events-list').innerHTML = filtered.map(e => `
+            const now = new Date();
+            const filtered = allEvents.filter(e => {
+                const matchKey = (e.title + (e.location||'')).toLowerCase().includes(key);
+                const matchFav = currentView === 'all' || favIds.has(e.id);
+                return matchKey && matchFav;
+            });
+
+            document.getElementById('events-list').innerHTML = filtered.map(e => {
+                const d = e.date?.toDate ? e.date.toDate() : new Date(e.date);
+                const isSoon = (d - now) > 0 && (d - now) < (3 * 24 * 60 * 60 * 1000); // 3日以内
+                return `
                 <div class="event-card" onclick="showDetail('${e.id}')">
+                    ${isSoon ? `<div class="soon-label">開催間近</div>` : ''}
+                    <div class="fav-btn-card" onclick="toggleFav(event, '${e.id}')">${favIds.has(e.id) ? '♥' : '♡'}</div>
                     ${e.imageUrl ? `<img src="${e.imageUrl}" class="event-image">` : ''}
                     <div class="card-content">
-                        <h3 style="margin:0 0 10px 0; font-size:1.1em; color:#111;">${e.title}</h3>
+                        <h3 style="margin:0 0 10px 0; font-size:1.1em;">${e.title}</h3>
                         <p style="color:#888; font-size:0.85em; margin:0;">${e.location}</p>
                     </div>
-                </div>
-            `).join('') || '<p>No events found.</p>';
+                </div>`;
+            }).join('') || '<p>該当するイベントがありません。</p>';
+        }
+
+        function renderCalendars(events) {
+            const calEvents = events.map(e => ({ title: e.title, start: (e.date?.toDate ? e.date.toDate() : new Date(e.date)).toISOString().split('T')[0], backgroundColor: '#00A3A0', borderColor: '#00A3A0' }));
+            new FullCalendar.Calendar(document.getElementById('calendar-now'), { initialView: 'dayGridMonth', locale: 'ja', height: 'auto', events: calEvents, headerToolbar: { left: '', center: 'title', right: '' } }).render();
+            const nextMonth = new Date(); nextMonth.setMonth(nextMonth.getMonth() + 1);
+            new FullCalendar.Calendar(document.getElementById('calendar-next'), { initialView: 'dayGridMonth', initialDate: nextMonth, locale: 'ja', height: 'auto', events: calEvents, headerToolbar: { left: '', center: 'title', right: '' } }).render();
         }
 
         function setupReview(eid) {
             const formDiv = document.getElementById('det-rev-form');
             const listDiv = document.getElementById('det-rev-list');
             if (auth.currentUser) {
-                formDiv.innerHTML = `
-                    <div style="margin:20px 0 10px 0;">
-                        <span class="star-input" data-v="1">★</span><span class="star-input" data-v="2">★</span><span class="star-input" data-v="3">★</span><span class="star-input" data-v="4">★</span><span class="star-input" data-v="5">★</span>
-                    </div>
-                    <textarea id="rev-text" class="review-input" rows="3" placeholder="感想を入力してください"></textarea>
-                    <button class="post-btn" id="rev-btn">レビューを投稿する</button>
-                `;
+                formDiv.innerHTML = `<div style="margin-top:20px;"><span class="star-input" data-v="1">★</span><span class="star-input" data-v="2">★</span><span class="star-input" data-v="3">★</span><span class="star-input" data-v="4">★</span><span class="star-input" data-v="5">★</span></div><textarea id="rev-text" style="width:100%; padding:10px; margin:10px 0;" rows="3" placeholder="感想を書く"></textarea><button id="rev-btn" class="post-btn">投稿する</button>`;
                 let score = 0;
                 const stars = formDiv.querySelectorAll('.star-input');
                 stars.forEach(s => s.onclick = () => { score = s.dataset.v; stars.forEach(st => st.classList.toggle('active', st.dataset.v <= score)); });
@@ -219,10 +232,7 @@
             }
             onSnapshot(query(collection(db, "reviews"), where("eventId", "==", eid)), (sn) => {
                 const sorted = sn.docs.sort((a,b) => (b.data().createdAt?.seconds || 0) - (a.data().createdAt?.seconds || 0));
-                listDiv.innerHTML = sorted.map(d => `<div class="review-item">
-                    <div style="display:flex; justify-content:space-between; font-size:0.85em;"><b>${d.data().userName}</b><span style="color:#333;">${'★'.repeat(d.data().rating)}</span></div>
-                    <div style="margin-top:10px; color:#555; line-height:1.6;">${d.data().comment}</div>
-                </div>`).join('') || '<p style="color:#ccc; font-size:0.85em; margin-top:20px;">まだレビューはありません</p>';
+                listDiv.innerHTML = sorted.map(d => `<div style="border-bottom:1px solid #eee; padding:15px 0;"><b>${d.data().userName}</b><br>${d.data().comment}</div>`).join('') || '<p>レビューはありません</p>';
             });
         }
 
