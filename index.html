@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EVENT PORTAL - Premium Edition</title>
+    <title>EVENT PORTAL - Premium AI Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
     <style>
         body { font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif; margin: 0; padding: 0; background-color: #f8f9fa; color: #333; line-height: 1.6; }
@@ -41,7 +41,7 @@
         .soon-label { position: absolute; top: 12px; left: 12px; background: #EA4335; color: white; padding: 3px 8px; font-size: 0.7em; font-weight: bold; border-radius: 3px; z-index: 5; }
         .fav-btn-card { position: absolute; top: 12px; right: 12px; background: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: 1px solid #eee; z-index: 6; }
 
-        /* AI要約セクションのデザイン */
+        /* AI要約セクション */
         #ai-summary-box { background: #f0faff; border: 1px solid #00A3A0; padding: 20px; border-radius: 12px; margin: 20px 0; }
         .ai-title { font-weight: bold; color: #00A3A0; display: flex; align-items: center; gap: 8px; }
         .ai-btn { font-size: 0.75em; padding: 5px 12px; background: #00A3A0; color: white; border: none; border-radius: 4px; cursor: pointer; }
@@ -152,7 +152,7 @@
             navigator.clipboard.writeText(text).then(() => alert("コピーしました"));
         };
 
-        // AIを呼び出す関数（Cloudflare経由）
+        // 🤖 AIを呼び出す関数（Cloudflare経由）
         window.runAi = async (title, desc) => {
             const textDiv = document.getElementById('ai-text');
             textDiv.innerHTML = "✨ GeminiがCloudflare経由で考え中...";
@@ -160,12 +160,15 @@
                 const WORKER_URL = "https://patient-voice-9171.k-93b.workers.dev";
                 const response = await fetch(WORKER_URL, {
                     method: 'POST',
-                    body: JSON.stringify({ title: title, description: desc.replace(/\n/g, ' ') })
+                    body: JSON.stringify({ 
+                        title: title, 
+                        description: (desc || "説明なし").replace(/\n/g, ' ') 
+                    })
                 });
                 const data = await response.json();
                 textDiv.innerHTML = `<div style="white-space:pre-wrap; line-height:1.6;">${data.reply}</div>`;
             } catch (err) {
-                textDiv.innerHTML = "エラーが発生しました。設定を確認してください。";
+                textDiv.innerHTML = "AIとの通信に失敗しました。設定を確認してください。";
             }
         };
 
