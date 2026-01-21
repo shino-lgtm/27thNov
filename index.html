@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EVENT PORTAL - Premium AI Edition</title>
+    <title>EVENT PORTAL - Ultimate AI Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
     <style>
         body { font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif; margin: 0; padding: 0; background-color: #f8f9fa; color: #333; line-height: 1.6; }
@@ -16,6 +16,13 @@
         
         #search-controls { display: flex; gap: 10px; margin: 15px 0; align-items: center; }
         #search-input { flex-grow: 1; padding: 12px 15px; border-radius: 4px; border: 1px solid #ddd; outline: none; }
+        
+        /* 🚀 トップ画面用 AIセクション */
+        #top-ai-box { background: #f0fff0; border: 2px solid #00A3A0; border-radius: 12px; padding: 18px; margin-bottom: 25px; box-shadow: 0 4px 12px rgba(0,163,160,0.1); }
+        .ai-concierge-title { font-weight: bold; color: #00A3A0; display: flex; align-items: center; gap: 8px; font-size: 1.1em; }
+        .ai-btn-top { font-size: 0.85em; padding: 8px 16px; background: #00A3A0; color: white; border: none; border-radius: 25px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .ai-btn-top:hover { background: #008f8c; transform: scale(1.05); }
+
         #tag-list { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; }
         .tag-btn { background: white; border: 1px solid #eee; padding: 5px 12px; border-radius: 20px; font-size: 0.8em; color: #666; cursor: pointer; }
         .tag-btn.active { background: #00A3A0; color: white; border-color: #00A3A0; }
@@ -41,7 +48,6 @@
         .soon-label { position: absolute; top: 12px; left: 12px; background: #EA4335; color: white; padding: 3px 8px; font-size: 0.7em; font-weight: bold; border-radius: 3px; z-index: 5; }
         .fav-btn-card { position: absolute; top: 12px; right: 12px; background: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: 1px solid #eee; z-index: 6; }
 
-        /* AI要約セクション */
         #ai-summary-box { background: #f0faff; border: 1px solid #00A3A0; padding: 20px; border-radius: 12px; margin: 20px 0; }
         .ai-title { font-weight: bold; color: #00A3A0; display: flex; align-items: center; gap: 8px; }
         .ai-btn { font-size: 0.75em; padding: 5px 12px; background: #00A3A0; color: white; border: none; border-radius: 4px; cursor: pointer; }
@@ -73,6 +79,17 @@
                     <input type="text" id="search-input" placeholder="キーワードで探す...">
                     <button id="search-button">検索</button>
                 </div>
+
+                <div id="top-ai-box">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span class="ai-concierge-title">🤖 AIコンシェルジュ</span>
+                        <button onclick="runTopAi()" class="ai-btn-top">AIにおすすめを聞く</button>
+                    </div>
+                    <div id="top-ai-text" style="margin-top:12px; font-size:0.95em; color:#444; line-height:1.6;">
+                        今日のあなたにぴったりなイベントをAIが全リストからピックアップします。
+                    </div>
+                </div>
+
                 <div id="tag-list"></div>
                 <div class="filter-tabs">
                     <div class="tab active" id="tab-all" onclick="changeTab('all')">すべてのイベント</div>
@@ -120,6 +137,8 @@
         let currentView = 'all';
         let activeTag = '';
 
+        const WORKER_URL = "https://patient-voice-9171.k-93b.workers.dev";
+
         window.showList = () => {
             document.getElementById('list-page').style.display = 'block';
             document.getElementById('detail-page').style.display = 'none';
@@ -152,24 +171,36 @@
             navigator.clipboard.writeText(text).then(() => alert("コピーしました"));
         };
 
-        // 🤖 AIを呼び出す関数（Cloudflare経由）
+        // 🤖 詳細ページ用 AI要約
         window.runAi = async (title, desc) => {
             const textDiv = document.getElementById('ai-text');
-            textDiv.innerHTML = "✨ GeminiがCloudflare経由で考え中...";
+            textDiv.innerHTML = "✨ Geminiが内容を分析中...";
             try {
-                const WORKER_URL = "https://patient-voice-9171.k-93b.workers.dev";
+                const response = await fetch(WORKER_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ title: title, description: (desc || "").replace(/\n/g, ' ') })
+                });
+                const data = await response.json();
+                textDiv.innerHTML = `<div style="white-space:pre-wrap;">${data.reply}</div>`;
+            } catch (err) { textDiv.innerHTML = "AI通信エラーが発生しました。"; }
+        };
+
+        // 🤖 トップ画面用 AIコンシェルジュ
+        window.runTopAi = async () => {
+            const textDiv = document.getElementById('top-ai-text');
+            textDiv.innerHTML = "✨ 全イベントの中からおすすめを考え中...";
+            const titles = allEvents.map(e => e.title).join('、');
+            try {
                 const response = await fetch(WORKER_URL, {
                     method: 'POST',
                     body: JSON.stringify({ 
-                        title: title, 
-                        description: (desc || "説明なし").replace(/\n/g, ' ') 
+                        title: "全イベントの推薦", 
+                        description: `以下のイベントリストから、特におすすめのものを2つ選び、短く紹介してください：${titles}` 
                     })
                 });
                 const data = await response.json();
-                textDiv.innerHTML = `<div style="white-space:pre-wrap; line-height:1.6;">${data.reply}</div>`;
-            } catch (err) {
-                textDiv.innerHTML = "AIとの通信に失敗しました。設定を確認してください。";
-            }
+                textDiv.innerHTML = `<div style="white-space:pre-wrap;">${data.reply}</div>`;
+            } catch (err) { textDiv.innerHTML = "AIコンシェルジュが休憩中です。"; }
         };
 
         window.showDetail = (eid) => {
@@ -186,7 +217,7 @@
             document.getElementById('event-detail-content').innerHTML = `
                 <div class="detail-card">
                     <h2 style="font-size:2em; margin-bottom:20px;">${e.title}</h2>
-                    ${e.imageUrl ? `<img src="${e.imageUrl}" class="detail-header-img" style="width:100%; border-radius:4px; margin-bottom:20px;">` : ''}
+                    ${e.imageUrl ? `<img src="${e.imageUrl}" style="width:100%; border-radius:4px; margin-bottom:20px;">` : ''}
 
                     <div id="ai-summary-box">
                         <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -200,7 +231,6 @@
                         <div class="info-row"><div class="info-label">日時</div><div>${dateStr}</div><button class="copy-btn" onclick="copyInfo('${e.title}','${dateStr}','${e.location}')">コピー</button></div>
                         <div class="info-row"><div class="info-label">場所</div><div>${e.location} <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(e.location)}" target="_blank" class="map-link">地図</a></div></div>
                         <div class="info-row"><div class="info-label">参加費</div><div>${e.price || '無料・記載なし'}</div></div>
-                        <div class="info-row"><div class="info-label">連絡先</div><div>${e.contact || '記載なし'}</div></div>
                     </div>
                     <div class="description-box"><div>DETAILS</div>${e.description || ""}</div>
                     <a href="https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(e.title)}" target="_blank" class="btn-link">Google Calendarに追加</a>
@@ -221,10 +251,7 @@
                 renderTags();
                 renderCalendars(allEvents);
                 renderEvents();
-            } catch (err) {
-                console.error(err);
-                document.getElementById('events-list').innerText = "データの読み込みに失敗しました。";
-            }
+            } catch (err) { console.error(err); }
         }
 
         function renderTags() {
@@ -234,11 +261,7 @@
             tagContainer.innerHTML = Array.from(tags).map(t => `<span class="tag-btn ${activeTag===t?'active':''}" onclick="filterByTag('${t}')">${t}</span>`).join('');
         }
 
-        window.filterByTag = (tag) => {
-            activeTag = (activeTag === tag) ? '' : tag;
-            renderTags();
-            renderEvents();
-        };
+        window.filterByTag = (tag) => { activeTag = (activeTag === tag) ? '' : tag; renderTags(); renderEvents(); };
 
         function renderEvents() {
             const key = document.getElementById('search-input').value.toLowerCase();
@@ -253,11 +276,8 @@
             const listEl = document.getElementById('events-list');
             listEl.innerHTML = filtered.map(e => {
                 const d = e.date?.toDate ? e.date.toDate() : new Date(e.date);
-                const isPast = d < now;
-                const isSoon = !isPast && (d - now) < (3 * 24 * 60 * 60 * 1000);
                 return `
-                <div class="event-card ${isPast?'past':''}" onclick="showDetail('${e.id}')">
-                    ${isSoon ? `<div class="soon-label">開催間近</div>` : ''}
+                <div class="event-card" onclick="showDetail('${e.id}')">
                     <div class="fav-btn-card" onclick="toggleFav(event, '${e.id}')">${favIds.has(e.id) ? '♥' : '♡'}</div>
                     ${e.imageUrl ? `<img src="${e.imageUrl}" class="event-image">` : ''}
                     <div class="card-content">
@@ -270,9 +290,9 @@
 
         function renderCalendars(events) {
             const calEvents = events.map(e => ({ title: e.title, start: (e.date?.toDate ? e.date.toDate() : new Date(e.date)).toISOString().split('T')[0], backgroundColor: '#00A3A0', borderColor: '#00A3A0' }));
-            new FullCalendar.Calendar(document.getElementById('calendar-now'), { initialView: 'dayGridMonth', locale: 'ja', height: 'auto', events: calEvents, headerToolbar: { left: '', center: 'title', right: '' } }).render();
+            new FullCalendar.Calendar(document.getElementById('calendar-now'), { initialView: 'daygridMonth', locale: 'ja', height: 'auto', events: calEvents, headerToolbar: { left: '', center: 'title', right: '' } }).render();
             const nextMonth = new Date(); nextMonth.setMonth(nextMonth.getMonth() + 1);
-            new FullCalendar.Calendar(document.getElementById('calendar-next'), { initialView: 'dayGridMonth', initialDate: nextMonth, locale: 'ja', height: 'auto', events: calEvents, headerToolbar: { left: '', center: 'title', right: '' } }).render();
+            new FullCalendar.Calendar(document.getElementById('calendar-next'), { initialView: 'daygridMonth', initialDate: nextMonth, locale: 'ja', height: 'auto', events: calEvents, headerToolbar: { left: '', center: 'title', right: '' } }).render();
         }
 
         function setupReview(eid) {
