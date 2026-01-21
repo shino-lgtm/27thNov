@@ -41,6 +41,11 @@
         .soon-label { position: absolute; top: 12px; left: 12px; background: #EA4335; color: white; padding: 3px 8px; font-size: 0.7em; font-weight: bold; border-radius: 3px; z-index: 5; }
         .fav-btn-card { position: absolute; top: 12px; right: 12px; background: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: 1px solid #eee; z-index: 6; }
 
+        /* AI要約セクションのデザイン */
+        #ai-summary-box { background: #f0faff; border: 1px solid #00A3A0; padding: 20px; border-radius: 12px; margin: 20px 0; }
+        .ai-title { font-weight: bold; color: #00A3A0; display: flex; align-items: center; gap: 8px; }
+        .ai-btn { font-size: 0.75em; padding: 5px 12px; background: #00A3A0; color: white; border: none; border-radius: 4px; cursor: pointer; }
+
         .detail-card { background: white; border-radius: 8px; padding: 40px; border: 1px solid #eee; }
         .info-list { margin: 30px 0; border-top: 1px solid #eee; }
         .info-row { display: flex; padding: 18px 0; border-bottom: 1px solid #eee; align-items: center; }
@@ -147,6 +152,23 @@
             navigator.clipboard.writeText(text).then(() => alert("コピーしました"));
         };
 
+        // AIを呼び出す関数（Cloudflare経由）
+        window.runAi = async (title, desc) => {
+            const textDiv = document.getElementById('ai-text');
+            textDiv.innerHTML = "✨ GeminiがCloudflare経由で考え中...";
+            try {
+                const WORKER_URL = "https://patient-voice-9171.k-93b.workers.dev";
+                const response = await fetch(WORKER_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ title: title, description: desc.replace(/\n/g, ' ') })
+                });
+                const data = await response.json();
+                textDiv.innerHTML = `<div style="white-space:pre-wrap; line-height:1.6;">${data.reply}</div>`;
+            } catch (err) {
+                textDiv.innerHTML = "エラーが発生しました。設定を確認してください。";
+            }
+        };
+
         window.showDetail = (eid) => {
             const e = allEvents.find(v => v.id === eid);
             if (!e) return;
@@ -162,6 +184,15 @@
                 <div class="detail-card">
                     <h2 style="font-size:2em; margin-bottom:20px;">${e.title}</h2>
                     ${e.imageUrl ? `<img src="${e.imageUrl}" class="detail-header-img" style="width:100%; border-radius:4px; margin-bottom:20px;">` : ''}
+
+                    <div id="ai-summary-box">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span class="ai-title">✨ Gemini AI 要約</span>
+                            <button class="ai-btn" onclick="runAi('${e.title}', '${e.description || ""}')">要約を生成</button>
+                        </div>
+                        <div id="ai-text" style="margin-top:15px; font-size:0.95em; color:#444;">「要約を生成」ボタンを押すと、AIがポイントを3行でまとめます。</div>
+                    </div>
+
                     <div class="info-list">
                         <div class="info-row"><div class="info-label">日時</div><div>${dateStr}</div><button class="copy-btn" onclick="copyInfo('${e.title}','${dateStr}','${e.location}')">コピー</button></div>
                         <div class="info-row"><div class="info-label">場所</div><div>${e.location} <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(e.location)}" target="_blank" class="map-link">地図</a></div></div>
@@ -178,16 +209,12 @@
 
         async function fetchEvents() {
             try {
-                // インデックスなしでも止まらないように安全に取得
                 const snap = await getDocs(collection(db, "events"));
                 allEvents = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                
-                // お気に入りデータの取得
                 if (auth.currentUser) {
-                    const fSnap = await getDocs(collection(db, "favorites")); // インデックスエラーを避けるためwhere句を外して取得後にフィルタ
+                    const fSnap = await getDocs(collection(db, "favorites"));
                     favIds = new Set(fSnap.docs.filter(d => d.data().userId === auth.currentUser.uid).map(d => d.data().eventId));
                 }
-                
                 renderTags();
                 renderCalendars(allEvents);
                 renderEvents();
@@ -213,17 +240,13 @@
         function renderEvents() {
             const key = document.getElementById('search-input').value.toLowerCase();
             const now = new Date();
-            
             let filtered = allEvents.filter(e => {
                 const matchKey = (e.title + (e.location||'')).toLowerCase().includes(key);
                 const matchFav = currentView === 'all' || favIds.has(e.id);
                 const matchTag = !activeTag || (e.tags && (Array.isArray(e.tags) ? e.tags.includes(activeTag) : e.tags.includes(activeTag)));
                 return matchKey && matchFav && matchTag;
             });
-
-            // 手動ソート（インデックス不要）
             filtered.sort((a,b) => (a.date?.seconds || 0) - (b.date?.seconds || 0));
-
             const listEl = document.getElementById('events-list');
             listEl.innerHTML = filtered.map(e => {
                 const d = e.date?.toDate ? e.date.toDate() : new Date(e.date);
