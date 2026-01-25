@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EVENT PORTAL</title>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
     <style>
         body { font-family: sans-serif; margin: 0; background: #f8f9fa; color: #333; }
         .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
@@ -15,21 +16,27 @@
         #search-controls { display: flex; gap: 10px; margin: 15px 0; }
         #search-input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 4px; }
         
-        /* 右下AIチャットデザイン */
+        /* 🚀 右下フローティングAIデザイン（維持） */
         #ai-widget { position: fixed; bottom: 30px; right: 30px; z-index: 2000; display: flex; flex-direction: column; align-items: flex-end; }
-        #ai-icon { width: 60px; height: 60px; background: #00A3A0; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
-        #ai-chat-box { width: 300px; background: white; border-radius: 12px; border: 1px solid #eee; margin-bottom: 15px; display: none; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
-        #ai-chat-header { background: #00A3A0; color: white; padding: 12px; font-weight: bold; display: flex; justify-content: space-between; }
-        #ai-chat-body { padding: 15px; font-size: 0.9em; line-height: 1.5; }
+        #ai-icon { width: 65px; height: 65px; background: #00A3A0; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 30px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); transition: 0.3s; }
+        #ai-icon:hover { transform: scale(1.1); }
+        #ai-chat-box { width: 320px; background: white; border-radius: 15px; border: 1px solid #eee; margin-bottom: 15px; display: none; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        #ai-chat-header { background: #00A3A0; color: white; padding: 15px; font-weight: bold; display: flex; justify-content: space-between; }
+        #ai-chat-body { padding: 20px; font-size: 0.95em; line-height: 1.6; }
         .ai-btn-action { width: 100%; background: #00A3A0; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; margin-bottom: 10px; }
 
-        #events-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-        .event-card { background: white; border-radius: 8px; border: 1px solid #eee; overflow: hidden; cursor: pointer; }
+        .main-content { display: flex; gap: 20px; flex-wrap: wrap; }
+        #events-list { flex: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        #calendar-view { width: 300px; background: white; padding: 10px; border-radius: 8px; border: 1px solid #eee; }
+        
+        .event-card { background: white; border-radius: 8px; border: 1px solid #eee; overflow: hidden; cursor: pointer; transition: 0.3s; }
+        .event-card:hover { border-color: #00A3A0; transform: translateY(-3px); }
         .event-image { width: 100%; height: 160px; object-fit: cover; }
         .card-content { padding: 15px; }
         
         #detail-page { display: none; }
         .detail-card { background: white; padding: 30px; border-radius: 8px; border: 1px solid #eee; }
+        .detail-image { width: 100%; max-height: 400px; object-fit: cover; border-radius: 8px; margin-bottom: 20px; }
         #ai-summary-box { background: #f0faff; border: 1px solid #00A3A0; padding: 20px; border-radius: 12px; margin: 20px 0; }
     </style>
 </head>
@@ -39,8 +46,9 @@
             <div id="auth-ui">
                 <span id="user-status">Guest</span>
                 <button id="login-button">ログイン</button>
+                <button id="logout-button" style="display:none;">ログアウト</button>
             </div>
-            <h1 onclick="location.reload()">EVENT PORTAL</h1>
+            <h1 onclick="window.showList()">EVENT PORTAL</h1>
             <div id="list-controls">
                 <div id="search-controls">
                     <input type="text" id="search-input" placeholder="イベントを探す...">
@@ -51,32 +59,37 @@
     </div>
 
     <div id="ai-widget">
-        <div id="ai-chat-box" style="display: none;">
+        <div id="ai-chat-box">
             <div id="ai-chat-header">
                 <span>🤖 AIコンシェルジュ</span>
                 <span onclick="window.toggleAiBox()" style="cursor:pointer;">×</span>
             </div>
             <div id="ai-chat-body">
-                <button id="top-ai-btn" onclick="window.runTopAi()" class="ai-btn-action">おすすめを聞く</button>
-                <div id="top-ai-text">Gemini AIがあなたにぴったりのイベントを提案します。</div>
+                <button id="top-ai-btn" onclick="window.runTopAi()" class="ai-btn-action">今日のおすすめを聞く</button>
+                <div id="top-ai-text">Gemini AIがあなたに最適なイベントをご案内します。</div>
             </div>
         </div>
         <div id="ai-icon" onclick="window.toggleAiBox()">💬</div>
     </div>
 
     <div class="container" id="list-page">
-        <div id="events-list">イベントを読み込み中...</div>
+        <div class="main-content">
+            <div id="events-list">読み込み中...</div>
+            <div id="calendar-view">
+                <div id="calendar-now"></div>
+            </div>
+        </div>
     </div>
 
     <div class="container" id="detail-page">
-        <button onclick="window.showList()">← 戻る</button>
+        <button onclick="window.showList()">← 一覧に戻る</button>
         <div id="event-detail-content"></div>
     </div>
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
         import { getFirestore, collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyBH8EPKOwIBIMR16Z7PTECc2Lp0Y5cfkHQ",
@@ -96,66 +109,9 @@
 
         window.toggleAiBox = () => {
             const box = document.getElementById('ai-chat-box');
-            box.style.display = (box.style.display === 'none') ? 'block' : 'none';
+            box.style.display = (box.style.display === 'block') ? 'none' : 'block';
         };
 
         window.showList = () => {
             document.getElementById('list-page').style.display = 'block';
-            document.getElementById('detail-page').style.display = 'none';
-            document.getElementById('list-controls').style.display = 'block';
-        };
-
-        window.renderEvents = () => {
-            const key = document.getElementById('search-input').value.toLowerCase();
-            const listEl = document.getElementById('events-list');
-            const filtered = allEvents.filter(e => e.title.toLowerCase().includes(key));
-            listEl.innerHTML = filtered.map(e => `
-                <div class="event-card" onclick="window.showDetail('${e.id}')">
-                    ${e.imageUrl ? `<img src="${e.imageUrl}" class="event-image">` : ''}
-                    <div class="card-content"><h3>${e.title}</h3><p>${e.location}</p></div>
-                </div>`).join('');
-        };
-
-        window.showDetail = (eid) => {
-            const e = allEvents.find(v => v.id === eid);
-            document.getElementById('list-page').style.display = 'none';
-            document.getElementById('list-controls').style.display = 'none';
-            document.getElementById('detail-page').style.display = 'block';
-            document.getElementById('event-detail-content').innerHTML = `
-                <div class="detail-card">
-                    <h2>${e.title}</h2>
-                    <div id="ai-summary-box">
-                        <b>✨ AI 要約</b>
-                        <button onclick="window.runAi('${e.title}', '${(e.description||"").replace(/'/g,"")}')">要約する</button>
-                        <div id="ai-text" style="margin-top:10px;">...</div>
-                    </div>
-                    <p>${e.description || ""}</p>
-                </div>`;
-        };
-
-        window.runAi = async (title, desc) => {
-            document.getElementById('ai-text').innerText = "生成中...";
-            const res = await fetch(WORKER_URL, { method: 'POST', body: JSON.stringify({ title, description: desc }) });
-            const data = await res.json();
-            document.getElementById('ai-text').innerText = data.reply;
-        };
-
-        window.runTopAi = async () => {
-            document.getElementById('top-ai-text').innerText = "分析中...";
-            const titles = allEvents.map(e => e.title).join('、');
-            const res = await fetch(WORKER_URL, { method: 'POST', body: JSON.stringify({ title: "おすすめ", description: titles }) });
-            const data = await res.json();
-            document.getElementById('top-ai-text').innerText = data.reply;
-        };
-
-        onAuthStateChanged(auth, async (user) => {
-            document.getElementById('user-status').textContent = user ? user.displayName : 'Guest';
-            const snap = await getDocs(collection(db, "events"));
-            allEvents = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            window.renderEvents();
-        });
-
-        document.getElementById('login-button').onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
-    </script>
-</body>
-</html>
+            document.getElementById('detail-page').style.display =
