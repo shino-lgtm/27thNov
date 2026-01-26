@@ -3,60 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EVENT PORTAL</title>
+    <title>EVENT PORTAL - Stable AI Edition</title>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
     <style>
         body { font-family: sans-serif; margin: 0; background: #f8f9fa; color: #333; }
-        .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
-        h1 { color: #00A3A0; text-align: center; cursor: pointer; }
-        #fixed-header { background: white; padding: 10px; border-bottom: 1px solid #eee; text-align: center; }
-        button { padding: 8px 15px; background: #00A3A0; color: white; border: none; border-radius: 4px; cursor: pointer; }
-        
-        /* 右下AIチャット */
-        #ai-widget { position: fixed; bottom: 20px; right: 20px; z-index: 2000; }
-        #ai-icon { width: 60px; height: 60px; background: #00A3A0; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-        #ai-chat-box { width: 280px; background: white; border: 1px solid #ccc; border-radius: 10px; margin-bottom: 10px; display: none; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        #ai-chat-header { background: #00A3A0; color: white; padding: 10px; border-radius: 10px 10px 0 0; display: flex; justify-content: space-between; }
-        #ai-chat-body { padding: 15px; font-size: 0.9em; }
-
-        #events-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; margin-top: 20px; }
-        .event-card { background: white; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; cursor: pointer; }
-        .event-image { width: 100%; height: 150px; object-fit: cover; }
-        .card-content { padding: 10px; }
-        
-        #detail-page { display: none; padding-top: 20px; }
-        .detail-card { background: white; border: 1px solid #ddd; padding: 20px; border-radius: 8px; }
-        #ai-summary-box { background: #e0f2f1; padding: 15px; border-radius: 8px; margin: 15px 0; border: 1px solid #00A3A0; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        h1 { color: #00A3A0; text-align: center; cursor: pointer; margin: 20px 0; font-weight: bold; }
+        #fixed-header { position: sticky; top: 0; z-index: 1000; background: rgba(255,255,255,0.95); padding: 10px 20px; border-bottom: 1px solid #eee; }
+        #auth-ui { text-align: right; margin-bottom: 10px; }
+        button { padding: 8px 18px; border-radius: 4px; border: 1px solid #00A3A0; cursor: pointer; font-weight: bold; }
+        #login-button { background: #00A3A0; color: white; }
+        #search-controls { display: flex; gap: 10px; margin: 15px 0; }
+        #search-input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 4px; }
+        #top-ai-box { background: #f0fff0; border: 2px solid #00A3A0; border-radius: 12px; padding: 18px; margin-bottom: 25px; }
+        .ai-title { font-weight: bold; color: #00A3A0; }
+        .ai-btn-top { background: #00A3A0; color: white; border: none; border-radius: 20px; padding: 8px 16px; }
+        .main-content { display: flex; gap: 20px; flex-wrap: wrap; }
+        #events-list { flex: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        #calendar-view { width: 300px; }
+        .event-card { background: white; border-radius: 8px; border: 1px solid #eee; overflow: hidden; cursor: pointer; transition: 0.3s; }
+        .event-card:hover { border-color: #00A3A0; transform: translateY(-3px); }
+        .event-image { width: 100%; height: 160px; object-fit: cover; }
+        .card-content { padding: 15px; }
+        #detail-page { display: none; }
+        .detail-card { background: white; padding: 30px; border-radius: 8px; border: 1px solid #eee; }
+        #ai-summary-box { background: #f0faff; border: 1px solid #00A3A0; padding: 20px; border-radius: 12px; margin: 20px 0; }
     </style>
 </head>
 <body>
     <div id="fixed-header">
-        <h1>EVENT PORTAL</h1>
-        <p></p>
-    </div>
-
-    <div id="ai-widget">
-        <div id="ai-chat-box">
-            <div id="ai-chat-header"><span>🤖 AIおすすめ</span><span onclick="toggleAi()" style="cursor:pointer;">×</span></div>
-            <div id="ai-chat-body">
-                <button onclick="runTopAi()" style="width:100%;">今日のおすすめを聞く</button>
-                <div id="top-ai-text" style="margin-top:10px;"></div>
+        <div class="container">
+            <div id="auth-ui">
+                <span id="user-status">読み込み中...</span>
+                <button id="login-button">ログイン</button>
+                <button id="logout-button" style="display:none;">ログアウト</button>
+            </div>
+            <h1 onclick="window.showList()">EVENT PORTAL</h1>
+            <div id="list-controls">
+                <div id="search-controls">
+                    <input type="text" id="search-input" placeholder="イベントを探す...">
+                    <button id="search-button" onclick="window.renderEvents()">検索</button>
+                </div>
+                <div id="top-ai-box">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span class="ai-title">🤖 AIコンシェルジュ</span>
+                        <button id="top-ai-btn" onclick="window.runTopAi()" class="ai-btn-top">AIにおすすめを聞く</button>
+                    </div>
+                    <div id="top-ai-text" style="margin-top:10px; font-size:0.9em;">Gemini AIが全イベントから最適解をピックアップします。</div>
+                </div>
             </div>
         </div>
-        <div id="ai-icon" onclick="toggleAi()">💬</div>
     </div>
 
     <div class="container" id="list-page">
-        <div id="events-list">データを読み込み中...</div>
+        <div class="main-content">
+            <div id="events-list">イベントを読み込み中...</div>
+            <div id="calendar-view">
+                <div id="calendar-now"></div>
+            </div>
+        </div>
     </div>
 
     <div class="container" id="detail-page">
-        <button onclick="showList()">← 戻る</button>
-        <div id="detail-content"></div>
+        <button onclick="window.showList()">← 一覧に戻る</button>
+        <div id="event-detail-content"></div>
     </div>
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
         import { getFirestore, collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyBH8EPKOwIBIMR16Z7PTECc2Lp0Y5cfkHQ",
@@ -69,67 +85,95 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const auth = getAuth(app);
         const WORKER_URL = "https://patient-voice-9171.k-93b.workers.dev";
-        let events = [];
 
-        async function load() {
-            try {
-                const snap = await getDocs(collection(db, "events"));
-                events = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                render();
-            } catch (e) { document.getElementById('events-list').innerText = "エラー：データが取得できませんでした。"; }
-        }
-
-        function render() {
-            document.getElementById('events-list').innerHTML = events.map(e => `
-                <div class="event-card" onclick="showDetail('${e.id}')">
-                    ${e.imageUrl ? `<img src="${e.imageUrl}" class="event-image">` : ''}
-                    <div class="card-content"><h3>${e.title}</h3><p>${e.location || ""}</p></div>
-                </div>`).join('');
-        }
-
-        window.showDetail = (id) => {
-            const e = events.find(v => v.id === id);
-            document.getElementById('list-page').style.display = 'none';
-            document.getElementById('detail-page').style.display = 'block';
-            document.getElementById('detail-content').innerHTML = `
-                <div class="detail-card">
-                    <h2>${e.title}</h2>
-                    <div id="ai-summary-box">
-                        <b>✨ AI 要約</b> <button onclick="runAi('${id}')">要約する</button>
-                        <div id="ai-text" style="margin-top:10px;"></div>
-                    </div>
-                    <p style="white-space:pre-wrap;">${e.description || ""}</p>
-                </div>`;
-        };
+        let allEvents = [];
 
         window.showList = () => {
             document.getElementById('list-page').style.display = 'block';
             document.getElementById('detail-page').style.display = 'none';
+            document.getElementById('list-controls').style.display = 'block';
         };
 
-        window.toggleAi = () => {
-            const b = document.getElementById('ai-chat-box');
-            b.style.display = b.style.display === 'block' ? 'none' : 'block';
+        async function fetchEvents() {
+            try {
+                const snap = await getDocs(collection(db, "events"));
+                allEvents = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                window.renderEvents();
+                renderCalendar();
+            } catch (err) { console.error(err); }
+        }
+
+        window.renderEvents = () => {
+            const key = document.getElementById('search-input').value.toLowerCase();
+            const list = document.getElementById('events-list');
+            const filtered = allEvents.filter(e => (e.title + (e.location||'')).toLowerCase().includes(key));
+            list.innerHTML = filtered.map(e => `
+                <div class="event-card" onclick="window.showDetail('${e.id}')">
+                    ${e.imageUrl ? `<img src="${e.imageUrl}" class="event-image">` : ''}
+                    <div class="card-content"><h3>${e.title}</h3><p>${e.location}</p></div>
+                </div>`).join('') || '<p>該当なし</p>';
+        }
+
+        function renderCalendar() {
+            const calEvents = allEvents.map(e => ({ title: e.title, start: (e.date?.toDate ? e.date.toDate() : new Date(e.date)).toISOString().split('T')[0] }));
+            new FullCalendar.Calendar(document.getElementById('calendar-now'), { initialView: 'dayGridMonth', locale: 'ja', events: calEvents, height: 'auto' }).render();
+        }
+
+        window.showDetail = (eid) => {
+            const e = allEvents.find(v => v.id === eid);
+            document.getElementById('list-page').style.display = 'none';
+            document.getElementById('list-controls').style.display = 'none';
+            document.getElementById('detail-page').style.display = 'block';
+            window.scrollTo(0,0);
+            document.getElementById('event-detail-content').innerHTML = `
+                <div class="detail-card">
+                    <h2>${e.title}</h2>
+                    <div id="ai-summary-box">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <b>✨ Gemini AI 要約</b>
+                            <button onclick="window.runAi('${e.title}', '${(e.description||"").replace(/'/g,"")}')" style="background:#00A3A0; color:white; border:none; padding:5px 15px; border-radius:4px;">要約</button>
+                        </div>
+                        <div id="ai-text" style="margin-top:10px; font-size:0.95em;">ボタンを押すと要約を開始します。</div>
+                    </div>
+                    <div style="margin-top:20px; line-height:1.8;">${e.description || ""}</div>
+                </div>`;
         };
 
-        window.runAi = async (id) => {
-            const e = events.find(v => v.id === id);
-            document.getElementById('ai-text').innerText = "生成中...";
-            const res = await fetch(WORKER_URL, { method: 'POST', body: JSON.stringify({ title: e.title, description: e.description }) });
-            const data = await res.json();
-            document.getElementById('ai-text').innerText = data.reply;
+        window.runAi = async (title, desc) => {
+            const textDiv = document.getElementById('ai-text');
+            textDiv.innerText = "✨ 生成中...";
+            try {
+                const res = await fetch(WORKER_URL, { method: 'POST', body: JSON.stringify({ title, description: desc }) });
+                const data = await res.json();
+                textDiv.innerText = data.reply;
+            } catch (err) { textDiv.innerText = "エラー：しばらく待ってから再度お試しください。"; }
         };
 
         window.runTopAi = async () => {
-            document.getElementById('top-ai-text').innerText = "分析中...";
-            const titles = events.map(e => e.title).join('、');
-            const res = await fetch(WORKER_URL, { method: 'POST', body: JSON.stringify({ title: "おすすめ", description: titles }) });
-            const data = await res.json();
-            document.getElementById('top-ai-text').innerText = data.reply;
+            const textDiv = document.getElementById('top-ai-text');
+            const btn = document.getElementById('top-ai-btn');
+            btn.disabled = true;
+            textDiv.innerText = "🤖 全イベントを分析してお勧めを選出中...";
+            const titles = allEvents.map(e => e.title).join('、');
+            try {
+                const res = await fetch(WORKER_URL, { method: 'POST', body: JSON.stringify({ title: "おすすめ選出", description: titles }) });
+                const data = await res.json();
+                textDiv.innerText = data.reply;
+            } catch (err) { textDiv.innerText = "現在混み合っています。少し時間をおいてください。"; }
+            finally { btn.disabled = false; }
         };
 
-        load();
+        onAuthStateChanged(auth, (user) => {
+            document.getElementById('user-status').textContent = user ? user.displayName : 'Guest';
+            document.getElementById('login-button').style.display = user ? 'none' : 'inline-block';
+            document.getElementById('logout-button').style.display = user ? 'inline-block' : 'none';
+            fetchEvents();
+        });
+
+        document.getElementById('login-button').onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
+        document.getElementById('logout-button').onclick = () => signOut(auth);
     </script>
 </body>
 </html>
