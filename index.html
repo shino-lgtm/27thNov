@@ -11,32 +11,38 @@
         h1 { color: #00A3A0; text-align: center; cursor: pointer; margin: 20px 0; font-weight: bold; }
         #fixed-header { position: sticky; top: 0; z-index: 1000; background: white; padding: 10px 20px; border-bottom: 1px solid #eee; }
         #auth-ui { text-align: right; margin-bottom: 10px; }
-        button { padding: 8px 18px; border-radius: 4px; border: 1px solid #00A3A0; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        button { padding: 8px 18px; border-radius: 4px; border: 1px solid #00A3A0; cursor: pointer; font-weight: bold; }
         #login-button { background: #00A3A0; color: white; }
         #search-controls { display: flex; gap: 10px; margin: 15px 0; }
         #search-input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 4px; }
         
-        /* 右下AIチャットデザイン */
+        /* 🚀 右下AIウィジェット */
         #ai-widget { position: fixed; bottom: 30px; right: 30px; z-index: 2000; display: flex; flex-direction: column; align-items: flex-end; }
-        #ai-icon { width: 65px; height: 65px; background: #00A3A0; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 30px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-        #ai-chat-box { width: 320px; background: white; border-radius: 15px; border: 1px solid #eee; margin-bottom: 15px; display: none; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        #ai-chat-header { background: #00A3A0; color: white; padding: 15px; font-weight: bold; display: flex; justify-content: space-between; }
-        #ai-chat-body { padding: 20px; font-size: 0.95em; line-height: 1.6; }
+        #ai-icon { width: 60px; height: 60px; background: #00A3A0; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 28px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        #ai-chat-box { width: 300px; background: white; border-radius: 12px; border: 1px solid #eee; margin-bottom: 15px; display: none; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+        #ai-chat-header { background: #00A3A0; color: white; padding: 12px; font-weight: bold; display: flex; justify-content: space-between; }
+        #ai-chat-body { padding: 15px; font-size: 0.9em; }
         .ai-btn-action { width: 100%; background: #00A3A0; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; margin-bottom: 10px; }
 
         .main-content { display: flex; gap: 20px; flex-wrap: wrap; }
-        #events-list { flex: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
-        #calendar-view { width: 300px; background: white; padding: 10px; border-radius: 8px; border: 1px solid #eee; height: fit-content; }
+        #events-list { flex: 1; display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
         
+        /* 📅 コンパクトカレンダー設定 */
+        #calendar-view { width: 280px; background: white; padding: 10px; border-radius: 8px; border: 1px solid #eee; height: fit-content; }
+        .fc { font-size: 0.75em; } /* カレンダー全体の文字を小さく */
+        .fc .fc-toolbar-title { font-size: 1.1em; } /* 月表示のタイトルサイズ */
+        .fc .fc-button { padding: 2px 5px; font-size: 0.8em; } /* ボタンを小さく */
+
         .event-card { background: white; border-radius: 8px; border: 1px solid #eee; overflow: hidden; cursor: pointer; transition: 0.3s; }
         .event-card:hover { border-color: #00A3A0; transform: translateY(-3px); }
-        .event-image { width: 100%; height: 160px; object-fit: cover; }
-        .card-content { padding: 15px; }
+        .event-image { width: 100%; height: 140px; object-fit: cover; }
+        .card-content { padding: 12px; }
+        .card-content h3 { margin: 0 0 5px; font-size: 1.1em; }
         
         #detail-page { display: none; }
         .detail-card { background: white; padding: 30px; border-radius: 8px; border: 1px solid #eee; }
         .detail-image { width: 100%; max-height: 400px; object-fit: cover; border-radius: 8px; margin-bottom: 20px; }
-        #ai-summary-box { background: #f0faff; border: 1px solid #00A3A0; padding: 20px; border-radius: 12px; margin: 20px 0; }
+        #ai-summary-box { background: #f0faff; border: 1px solid #00A3A0; padding: 15px; border-radius: 10px; margin: 15px 0; }
     </style>
 </head>
 <body>
@@ -51,7 +57,7 @@
             <div id="list-controls">
                 <div id="search-controls">
                     <input type="text" id="search-input" placeholder="イベントを探す...">
-                    <button id="search-btn">検索</button>
+                    <button onclick="window.renderEvents()">検索</button>
                 </div>
             </div>
         </div>
@@ -61,8 +67,8 @@
         <div id="ai-chat-box">
             <div id="ai-chat-header"><span>🤖 AIコンシェルジュ</span><span onclick="window.toggleAiBox()" style="cursor:pointer;">×</span></div>
             <div id="ai-chat-body">
-                <button id="top-ai-btn" class="ai-btn-action">今日のおすすめを聞く</button>
-                <div id="top-ai-text">Gemini AIがイベントをご案内します。</div>
+                <button onclick="window.runTopAi()" class="ai-btn-action">おすすめを聞く</button>
+                <div id="top-ai-text">Gemini AIがイベントを提案します。</div>
             </div>
         </div>
         <div id="ai-icon" onclick="window.toggleAiBox()">💬</div>
@@ -70,7 +76,7 @@
 
     <div class="container" id="list-page">
         <div class="main-content">
-            <div id="events-list">データを取得中...</div>
+            <div id="events-list">読み込み中...</div>
             <div id="calendar-view"><div id="calendar-now"></div></div>
         </div>
     </div>
@@ -120,11 +126,12 @@
                 <div class="event-card" onclick="window.showDetail('${e.id}')">
                     ${e.imageUrl ? `<img src="${e.imageUrl}" class="event-image">` : ''}
                     <div class="card-content"><h3>${e.title}</h3><p>${e.location || ""}</p></div>
-                </div>`).join('') || '<p>該当なし</p>';
+                </div>`).join('');
         };
 
         window.showDetail = (eid) => {
             const e = allEvents.find(v => v.id === eid);
+            if(!e) return;
             document.getElementById('list-page').style.display = 'none';
             document.getElementById('list-controls').style.display = 'none';
             document.getElementById('detail-page').style.display = 'block';
@@ -135,63 +142,5 @@
                     <h2>${e.title}</h2>
                     <p><b>場所:</b> ${e.location || "未設定"}</p>
                     <div id="ai-summary-box">
-                        <b>✨ AI 要約</b> <button id="run-ai-btn">要約を実行</button>
-                        <div id="ai-text" style="margin-top:10px;">...</div>
-                    </div>
-                    <div style="white-space:pre-wrap; line-height:1.6;">${e.description || ""}</div>
-                </div>`;
-            document.getElementById('run-ai-btn').onclick = () => window.runAi(e);
-        };
-
-        window.runAi = async (e) => {
-            document.getElementById('ai-text').innerText = "✨ 生成中...";
-            try {
-                const res = await fetch(WORKER_URL, { method: 'POST', body: JSON.stringify({ title: e.title, description: e.description }) });
-                const data = await res.json();
-                document.getElementById('ai-text').innerText = data.reply;
-            } catch (err) { document.getElementById('ai-text').innerText = "AI準備中：1分ほど待ってお試しください"; }
-        };
-
-        document.getElementById('top-ai-btn').onclick = async () => {
-            document.getElementById('top-ai-text').innerText = "🤖 分析中...";
-            const titles = allEvents.map(e => e.title).join('、');
-            try {
-                const res = await fetch(WORKER_URL, { method: 'POST', body: JSON.stringify({ title: "おすすめ", description: titles }) });
-                const data = await res.json();
-                document.getElementById('top-ai-text').innerText = data.reply;
-            } catch (err) { document.getElementById('top-ai-text').innerText = "しばらくお待ちください。"; }
-        };
-
-        document.getElementById('search-btn').onclick = () => window.renderEvents();
-
-        onAuthStateChanged(auth, async (user) => {
-            document.getElementById('user-status').textContent = user ? user.displayName : 'Guest';
-            document.getElementById('login-button').style.display = user ? 'none' : 'inline-block';
-            document.getElementById('logout-button').style.display = user ? 'inline-block' : 'none';
-            
-            try {
-                const snap = await getDocs(collection(db, "events"));
-                allEvents = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                window.renderEvents();
-                
-                // カレンダーの初期化（データ到着から0.5秒遅らせて安全に実行）
-                setTimeout(() => {
-                    const calEl = document.getElementById('calendar-now');
-                    if (calEl && allEvents.length > 0) {
-                        const calEvents = allEvents.map(e => ({
-                            title: e.title,
-                            start: (e.date?.toDate ? e.date.toDate() : new Date(e.date)).toISOString().split('T')[0]
-                        }));
-                        new FullCalendar.Calendar(calEl, {
-                            initialView: 'dayGridMonth', locale: 'ja', events: calEvents, height: 'auto'
-                        }).render();
-                    }
-                }, 500);
-            } catch (e) { document.getElementById('events-list').innerText = "データ読み込みエラー"; }
-        });
-
-        document.getElementById('login-button').onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
-        document.getElementById('logout-button').onclick = () => signOut(auth);
-    </script>
-</body>
-</html>
+                        <b>✨ AI 要約</b> <button id="run-ai-btn">実行</button>
+                        <div id="ai-text" style="margin-
